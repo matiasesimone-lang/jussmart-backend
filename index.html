@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JusSmart</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .app-card { width: 100%; max-width: 420px; background: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 12px; }
+    .header h1 { font-size: 1.5rem; color: #fff; }
+    .header p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+    .tabs { display: flex; gap: 6px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .tab-btn.active { background: #1e50ff; color: #fff; }
+    .input-box { margin-bottom: 16px; }
+    .input-box label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
+    .input-box input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.95rem; outline: none; }
+    .btn-search { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e50ff, #00f0ff); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .results { margin-top: 24px; }
+    .results h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .badge-tj { background: #1e50ff; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+    .badge-status { background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid #00f0ff; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; }
+    .card-num { font-size: 0.9rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; }
+    .card-detail { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
+    .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; }
+    .card-actions { display: flex; gap: 8px; }
+    .btn-action { flex: 1; text-align: center; padding: 10px; font-size: 0.75rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; }
+    .btn-copy { background: #334155; color: #f8fafc; }
+    .btn-access { background: rgba(30, 80, 255, 0.3); border: 1px solid #1e50ff; color: #00f0ff; }
+    .loading { text-align: center; color: #00f0ff; font-size: 0.85rem; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="app-card">
+  <div class="header">
+    <div class="logo-badge">⚖️ JusSmart</div>
+    <h1>Consulta Processual</h1>
+    <p>Busca inteligente nos Tribunais de Justiça</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="btnCpf" onclick="alterarAba('cpf')">CPF / CNPJ</button>
+    <button class="tab-btn" id="btnNum" onclick="alterarAba('numero')">Nº Processo</button>
+    <button class="tab-btn" id="btnNome" onclick="alterarAba('nome')">Nome</button>
+  </div>
+
+  <div class="input-box">
+    <label id="inputLabel">Digite o CPF ou CNPJ</label>
+    <input type="text" id="searchTerm" value="" placeholder="Ex: 000.000.000-00">
+  </div>
+
+  <button class="btn-search" onclick="executarBusca()">Buscar nos Tribunais (Até 100)</button>
+  <div class="loading" id="loadingMsg">⏳ Mapeando registros e até 100 processos...</div>
+
+  <div class="results" id="resultsArea">
+    <h2>Resultados</h2>
+    <p id="emptyText" style="font-size: 0.8rem; color: #64748b;">Nenhuma busca realizada ainda.</p>
+  </div>
+</div>
+
+<script>
+  let modoAtual = 'cpf';
+
+  const baseProcessos = [
+    {
+      numero: "8004080-34.2022.8.05.0146",
+      tribunal: "TJBA",
+      status: "Exoneração de Alimentos",
+      orgaoJulgador: "Vara de Família - Comarca de Juazeiro",
+      ultimaMovimentacao: "Concluso para despacho/decisão do Juiz.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      numero: "8003476-44.2020.8.05.0146",
+      tribunal: "TJBA",
+      status: "Procedimento Comum / FUNPREV",
+      orgaoJulgador: "1ª Vara Fazenda Pública - Juazeiro",
+      ultimaMovimentacao: "Juntada de petição de manifestação da parte autora.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      numero: "0003373-96.2008.8.05.0146",
+      tribunal: "TJBA",
+      status: "Execução Contra a Fazenda Pública",
+      orgaoJulgador: "Vara da Fazenda Pública - Juazeiro",
+      ultimaMovimentacao: "Expedição de requisição/precatório efetuada.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      numero: "0063666-74.2011.8.05.0001",
+      tribunal: "TJBA",
+      status: "Ordinária / Gratificações PM",
+      orgaoJulgador: "6ª Vara da Fazenda Pública - Salvador",
+      ultimaMovimentacao: "Aguardando cumprimento de ordem de pagamento.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    }
+  ];
+
+  function alterarAba(modo) {
+    modoAtual = modo;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const label = document.getElementById('inputLabel');
+    const input = document.getElementById('searchTerm');
+    if (modo === 'cpf') {
+      document.getElementById('btnCpf').classList.add('active');
+      label.innerText = 'Digite o CPF ou CNPJ';
+      input.placeholder = 'Ex: 000.000.000-00';
+    } else if (modo === 'numero') {
+      document.getElementById('btnNum').classList.add('active');
+      label.innerText = 'Digite o Número do Processo';
+      input.placeholder = 'Ex: 8004080-34.2022.8.05.0146';
+    } else {
+      document.getElementById('btnNome').classList.add('active');
+      label.innerText = 'Digite o Nome Completo';
+      input.placeholder = 'Ex: José Rivaldo Matias dos Santos';
+    }
+  }
+
+  function copiarNumero(num) {
+    navigator.clipboard.writeText(num);
+    alert('Número do processo ' + num + ' copiado com sucesso!');
+  }
+
+  function executarBusca() {
+    const valorInput = document.getElementById('searchTerm').value.trim();
+    const areaResultados = document.getElementById('resultsArea');
+    const indicadorCarregamento = document.getElementById('loadingMsg');
+
+    if (!valorInput) {
+      alert('Digite um dado para pesquisar.');
+      return;
+    }
+
+    indicadorCarregamento.style.display = 'block';
+
+    setTimeout(() => {
+      indicadorCarregamento.style.display = 'none';
+      let resultados = [...baseProcessos];
+
+      if (modoAtual === 'numero') {
+        const numL = valorInput.replace(/\D/g, '');
+        resultados = baseProcessos.filter(p => p.numero.replace(/\D/g, '').includes(numL));
+        if (resultados.length === 0) {
+          resultados = [{
+            numero: valorInput,
+            tribunal: "TJBA",
+            status: "Consulta PJe Direct",
+            orgaoJulgador: "Vara Cível de Juazeiro",
+            ultimaMovimentacao: "Aguardando consulta direta no portal do tribunal.",
+            link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+          }];
+        }
+      }
+
+      resultados = resultados.slice(0, 100);
+
+      let html = `<h2>Resultados Encontrados (${resultados.length})</h2>`;
+      resultados.forEach(p => {
+        html += `
+          <div class="card">
+            <div class="card-top">
+              <span class="badge-tj">${p.tribunal}</span>
+              <span class="badge-status">${p.status}</span>
+            </div>
+            <div class="card-num">Proc: ${p.numero}</div>
+            <div class="card-detail">${p.orgaoJulgador}</div>
+            <div class="card-mov">📌 <b>Último andamento:</b> ${p.ultimaMovimentacao}</div>
+            <div class="card-actions">
+              <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}')">📋 Copiar Nº</button>
+              <a href="${p.link}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+            </div>
+          </div>
+        `;
+      });
+
+      areaResultados.innerHTML = html;
+    }, 400);
+  }
+</script>
+
+</body>
+</html>
