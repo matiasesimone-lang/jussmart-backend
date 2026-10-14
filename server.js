@@ -23,11 +23,22 @@ app.post('/api/buscar', async (req, res) => {
   const valorLimpo = valor.replace(/\D/g, '');
 
   try {
+    let matchField = 'dadosBasicos.polo.parte.pessoa.nome';
+    let searchValue = valor;
+
+    if (tipo === 'numero') {
+      matchField = 'numeroProcesso';
+      searchValue = valorLimpo;
+    } else if (tipo === 'cpf') {
+      matchField = 'dadosBasicos.polo.parte.pessoa.numeroDocumento';
+      searchValue = valorLimpo;
+    }
+
     const bodyQuery = {
-      size: 20,
+      size: 50,
       query: {
         match: {
-          [tipo === 'numero' ? 'numeroProcesso' : 'dadosBasicos.polo.parte.pessoa.numeroDocumento']: valorLimpo
+          [matchField]: searchValue
         }
       }
     };
@@ -51,34 +62,20 @@ app.post('/api/buscar', async (req, res) => {
       return {
         numero: numProc,
         tribunal: src.tribunal || "TJBA",
-        status: src.classe?.nome || "Procedimento Comum",
+        status: src.classe?.nome || "Procedimento Comum Cível",
         orgaoJulgador: src.orgaoJulgador?.nome || "Vara Cível",
-        linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+        linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
       };
     });
+
+    if (processos.length === 0) {
+      return res.json({ sucesso: true, processos: [] });
+    }
 
     res.json({ sucesso: true, processos });
 
   } catch (error) {
-    res.json({
-      sucesso: true,
-      processos: [
-        {
-          numero: "8001234-56.2025.8.05.0146",
-          tribunal: "TJBA",
-          status: "Procedimento Comum Cível",
-          orgaoJulgador: "1ª Vara Cível de Juazeiro",
-          linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-        },
-        {
-          numero: "8005678-12.2024.8.05.0146",
-          tribunal: "TJBA",
-          status: "Juizado Especial Cível",
-          orgaoJulgador: "Vara do Sistema dos Juizados - Juazeiro",
-          linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-        }
-      ]
-    });
+    res.status(500).json({ sucesso: false, erro: error.message });
   }
 });
 
