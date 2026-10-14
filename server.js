@@ -81,3 +81,4 @@ app.post('/api/buscar', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor JusSmart rodando na porta ${PORT}`);
 });
+
