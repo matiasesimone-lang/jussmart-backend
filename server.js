@@ -23,24 +23,18 @@ app.post('/api/buscar', async (req, res) => {
   const valorLimpo = valor.replace(/\D/g, '');
 
   try {
-    let matchField = 'dadosBasicos.polo.parte.pessoa.nome';
-    let searchValue = valor;
-
+    let matchQuery = {};
     if (tipo === 'numero') {
-      matchField = 'numeroProcesso';
-      searchValue = valorLimpo;
+      matchQuery = { numeroProcesso: valorLimpo };
     } else if (tipo === 'cpf') {
-      matchField = 'dadosBasicos.polo.parte.pessoa.numeroDocumento';
-      searchValue = valorLimpo;
+      matchQuery = { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo };
+    } else {
+      matchQuery = { "dadosBasicos.polo.parte.pessoa.nome": valor };
     }
 
     const bodyQuery = {
       size: 50,
-      query: {
-        match: {
-          [matchField]: searchValue
-        }
-      }
+      query: { match: matchQuery }
     };
 
     const response = await axios.post(
@@ -51,7 +45,7 @@ app.post('/api/buscar', async (req, res) => {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 10000
+        timeout: 12000
       }
     );
 
@@ -67,10 +61,6 @@ app.post('/api/buscar', async (req, res) => {
         linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
       };
     });
-
-    if (processos.length === 0) {
-      return res.json({ sucesso: true, processos: [] });
-    }
 
     res.json({ sucesso: true, processos });
 
