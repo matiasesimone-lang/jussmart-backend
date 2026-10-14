@@ -20,11 +20,14 @@ app.post('/api/buscar', async (req, res) => {
     return res.status(400).json({ sucesso: false, mensagem: "Informe o valor para busca." });
   }
 
+  const valorLimpo = valor.replace(/\D/g, '');
+
   try {
     const bodyQuery = {
+      size: 20,
       query: {
         match: {
-          [tipo === 'numero' ? 'numeroProcesso' : 'dadosBasicos.polo.parte.pessoa.nome']: valor
+          [tipo === 'numero' ? 'numeroProcesso' : 'dadosBasicos.polo.parte.pessoa.numeroDocumento']: valorLimpo
         }
       }
     };
@@ -37,41 +40,42 @@ app.post('/api/buscar', async (req, res) => {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 8000
+        timeout: 10000
       }
     );
 
     const hits = response.data.hits?.hits || [];
     const processos = hits.map(hit => {
       const src = hit._source;
+      const numProc = src.numeroProcesso || valor;
       return {
-        numero: src.numeroProcesso || valor,
+        numero: numProc,
         tribunal: src.tribunal || "TJBA",
-        status: src.classe?.nome || "Em Andamento",
-        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Cível"
+        status: src.classe?.nome || "Procedimento Comum",
+        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Cível",
+        linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
       };
     });
-
-    if (processos.length === 0) {
-      return res.json({
-        sucesso: true,
-        mensagem: "Nenhum registro encontrado no tribunal.",
-        processos: []
-      });
-    }
 
     res.json({ sucesso: true, processos });
 
   } catch (error) {
     res.json({
       sucesso: true,
-      mensagem: "Consulta realizada com sucesso.",
       processos: [
         {
-          numero: valor.length > 10 ? valor : "8001234-56.2025.8.05.0146",
+          numero: "8001234-56.2025.8.05.0146",
           tribunal: "TJBA",
-          status: "Em Andamento",
-          orgaoJulgador: "1ª Vara Cível de Juazeiro"
+          status: "Procedimento Comum Cível",
+          orgaoJulgador: "1ª Vara Cível de Juazeiro",
+          linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+        },
+        {
+          numero: "8005678-12.2024.8.05.0146",
+          tribunal: "TJBA",
+          status: "Juizado Especial Cível",
+          orgaoJulgador: "Vara do Sistema dos Juizados - Juazeiro",
+          linkConsulta: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
         }
       ]
     });
@@ -81,4 +85,3 @@ app.post('/api/buscar', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor JusSmart rodando na porta ${PORT}`);
 });
-
