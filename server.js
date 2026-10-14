@@ -3,7 +3,9 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-app.use(cors());
+
+// Habilita CORS completo para qualquer origem (evita o bloqueio "Failed to fetch")
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
@@ -25,7 +27,7 @@ app.post('/api/buscar', async (req, res) => {
   try {
     let matchQuery = {};
     if (tipo === 'numero') {
-      matchQuery = { numeroProcesso: valorLimpo };
+      matchQuery = { "numeroProcesso": valorLimpo };
     } else if (tipo === 'cpf') {
       matchQuery = { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo };
     } else {
@@ -33,7 +35,7 @@ app.post('/api/buscar', async (req, res) => {
     }
 
     const bodyQuery = {
-      size: 50,
+      size: 50, // Retorna até 50 processos
       query: { match: matchQuery }
     };
 
@@ -45,13 +47,13 @@ app.post('/api/buscar', async (req, res) => {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 12000
+        timeout: 15000
       }
     );
 
     const hits = response.data.hits?.hits || [];
     const processos = hits.map(hit => {
-      const src = hit._source;
+      const src = hit._source || {};
       const numProc = src.numeroProcesso || valor;
       return {
         numero: numProc,
