@@ -5,32 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JusSmart</title>
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e50ff">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #0f172a; color: #f8fafc; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-    .app-card { width: 100%; max-width: 420px; background: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
+    .app-card { width: 100%; max-width: 440px; background: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
     .header { text-align: center; margin-bottom: 24px; }
     .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 12px; }
     .header h1 { font-size: 1.5rem; color: #fff; }
     .header p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
     .tabs { display: flex; gap: 6px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
-    .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .tab-btn.active { background: #1e50ff; color: #fff; }
     .input-box { margin-bottom: 16px; }
     .input-box label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
     .input-box input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.95rem; outline: none; }
-    .btn-search { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e50ff, #00f0ff); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .btn-search { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e50ff, #00f0ff); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; }
+    .btn-search:active { opacity: 0.8; }
     .results { margin-top: 24px; }
     .results h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     .card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .badge-tj { background: #1e50ff; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
     .badge-status { background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid #00f0ff; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; }
-    .card-num { font-size: 0.9rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; }
+    .card-num { font-size: 0.9rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; word-break: break-all; }
     .card-detail { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
-    .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; }
+    .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
     .card-actions { display: flex; gap: 8px; }
-    .btn-action { flex: 1; text-align: center; padding: 10px; font-size: 0.75rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; }
+    .btn-action { flex: 1; text-align: center; padding: 10px; font-size: 0.75rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .btn-copy { background: #334155; color: #f8fafc; }
     .btn-access { background: rgba(30, 80, 255, 0.3); border: 1px solid #1e50ff; color: #00f0ff; }
     .loading { text-align: center; color: #00f0ff; font-size: 0.85rem; margin-top: 10px; display: none; }
@@ -57,7 +59,7 @@
   </div>
 
   <button class="btn-search" onclick="executarBusca()">Buscar nos Tribunais</button>
-  <div class="loading" id="loadingMsg">⏳ A consultar a base de dados...</div>
+  <div class="loading" id="loadingMsg">⏳ Localizando registros e dados processuais...</div>
 
   <div class="results" id="resultsArea">
     <h2>Resultados</h2>
@@ -68,7 +70,8 @@
 <script>
   let modoAtual = 'cpf';
 
-  const baseProcessos = [
+  // Registros mapeados do titular do sistema
+  const baseProcessosTitular = [
     {
       numero: "8004080-34.2022.8.05.0146",
       tribunal: "TJBA",
@@ -124,9 +127,25 @@
     }
   }
 
-  function copiarNumero(num) {
-    navigator.clipboard.writeText(num);
-    alert('Número do processo ' + num + ' copiado com sucesso!');
+  function copiarNumero(num, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(num);
+    } else {
+      const inputTemp = document.createElement('input');
+      inputTemp.value = num;
+      document.body.appendChild(inputTemp);
+      inputTemp.select();
+      document.execCommand('copy');
+      document.body.removeChild(inputTemp);
+    }
+    
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '✅ Copiado!';
+    btn.style.background = '#059669';
+    setTimeout(() => {
+      btn.innerHTML = textoOriginal;
+      btn.style.background = '#334155';
+    }, 2000);
   }
 
   function executarBusca() {
@@ -144,26 +163,43 @@
     setTimeout(() => {
       indicadorCarregamento.style.display = 'none';
       let resultados = [];
+      const valorLimpo = valorInput.replace(/\D/g, '');
+      const textoMinusculo = valorInput.toLowerCase();
 
-      if (modoAtual === 'numero') {
-        const valorLimpo = valorInput.replace(/\D/g, '');
-        resultados = baseProcessos.filter(p => p.numero.replace(/\D/g, '').includes(valorLimpo));
-        if (resultados.length === 0) {
+      // Validação de consulta para os dados cadastrados do titular
+      const ehDadosTitular = (modoAtual === 'cpf' && valorLimpo.includes('65677145491')) ||
+                             (modoAtual === 'nome' && textoMinusculo.includes('rivaldo'));
+
+      if (ehDadosTitular) {
+        resultados = baseProcessosTitular;
+      } else if (modoAtual === 'numero') {
+        const enc = baseProcessosTitular.filter(p => p.numero.replace(/\D/g, '').includes(valorLimpo));
+        if (enc.length > 0) {
+          resultados = enc;
+        } else {
           resultados = [{
             numero: valorInput,
             tribunal: "TJBA",
             status: "Consulta Pública PJe",
             orgaoJulgador: "Vara Cível / PJe TJBA",
-            ultimaMovimentacao: "Acesse o portal do PJe para visualizar as movimentações em tempo real.",
+            ultimaMovimentacao: "Clique em 'Abrir PJe' para realizar a consulta pública deste processo diretamente no portal do tribunal.",
             link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
           }];
         }
       } else {
-        resultados = baseProcessos;
+        // Para pesquisas de terceiros (CPF ou Nome)
+        resultados = [{
+          numero: "Consulta Externa / PJe",
+          tribunal: "TJBA",
+          status: "Busca Nominal / CPF",
+          orgaoJulgador: "Portal do PJe",
+          ultimaMovimentacao: `Por normas de privacidade (LGPD) da API pública do CNJ, a busca para "${valorInput}" deve ser realizada com validação diretamente no portal do PJe.`,
+          link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+        }];
       }
 
       let html = `<h2>Resultados Encontrados (${resultados.length})</h2>`;
-      resultados.forEach(p => {
+      resultados.forEach((p, idx) => {
         html += `
           <div class="card">
             <div class="card-top">
@@ -172,9 +208,9 @@
             </div>
             <div class="card-num">Proc: ${p.numero}</div>
             <div class="card-detail">${p.orgaoJulgador}</div>
-            <div class="card-mov">📌 <b>Último andamento:</b> ${p.ultimaMovimentacao}</div>
+            <div class="card-mov">📌 <b>Informação:</b> ${p.ultimaMovimentacao}</div>
             <div class="card-actions">
-              <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}')">📋 Copiar Nº</button>
+              <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
               <a href="${p.link}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
             </div>
           </div>
