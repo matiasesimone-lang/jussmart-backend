@@ -3,41 +3,30 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 const DATAJUD_API_KEY = "cGFydGljaXBhbnRlOmRhdGFqdWRfcGFydGljaXBhbnRl";
 
-// Lista de endpoints dos Tribunais Estaduais, Federais e Trabalhistas
-const TRIBUNAIS_ALVO = [
-  { sigla: "TJBA", index: "api_publica_tjba", esfera: "Estadual (BA)" },
-  { sigla: "TRF1", index: "api_publica_trf1", esfera: "Federal (BA/DF/Região)" },
-  { sigla: "TRF5", index: "api_publica_trf5", esfera: "Federal (PE/AL/Região)" },
-  { sigla: "TRT5", index: "api_publica_trt5", esfera: "Trabalhista (BA)" },
-  { sigla: "TJPE", index: "api_publica_tjpe", esfera: "Estadual (PE)" },
-  { sigla: "TJSP", index: "api_publica_tjsp", esfera: "Estadual (SP)" },
-  { sigla: "TJRJ", index: "api_publica_tjrj", esfera: "Estadual (RJ)" }
-];
-
 app.get('/', (req, res) => {
-  res.json({ status: "API JusSmart Multi-Tribunais Online", timestamp: new Date() });
+  res.json({ status: "API JusSmart Universal Online", ok: true });
 });
 
 app.post('/api/buscar', async (req, res) => {
   const { tipo, valor } = req.body;
 
   if (!valor) {
-    return res.status(400).json({ sucesso: false, mensagem: "Informe o valor para busca." });
+    return res.status(400).json({ sucesso: false, mensagem: "Informe o valor para pesquisa." });
   }
 
   const valorLimpo = valor.replace(/\D/g, '');
-
-  // Estruturação da consulta para a API do DataJud
   let queryElastic = {};
+
   if (tipo === 'numero') {
-    queryElastic = { match: { "numeroProcesso": valorLimpo } };
+    queryElastic = {
+      match: { "numeroProcesso": valorLimpo }
+    };
   } else if (tipo === 'cpf') {
     queryElastic = {
       bool: {
@@ -48,7 +37,6 @@ app.post('/api/buscar', async (req, res) => {
       }
     };
   } else {
-    // Busca por nome flexível (todas as palavras presentes)
     queryElastic = {
       match: {
         "dadosBasicos.polo.parte.pessoa.nome": {
@@ -59,56 +47,40 @@ app.post('/api/buscar', async (req, res) => {
     };
   }
 
-  // Executa as requisições em paralelo em todos os tribunais cadastrados
-  const buscasParalelas = TRIBUNAIS_ALVO.map(trib => {
-    return axios.post(
-      `https://api-publica.datajud.cnj.jus.br/${trib.index}/_search`,
-      { size: 25, query: queryElastic },
+  try {
+    const response = await axios.post(
+      'https://api-publica.datajud.cnj.jus.br/api_publica_tjba/_search',
+      { size: 50, query: queryElastic },
       {
         headers: {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 10000
+        timeout: 12000
       }
-    ).then(resData => ({ tribunalInfo: trib, hits: resData.data.hits?.hits || [] }))
-     .catch(() => ({ tribunalInfo: trib, hits: [] }));
-  });
+    );
 
-  try {
-    const resultadosTribunais = await Promise.all(buscasParalelas);
-    let todosProcessos = [];
-
-    resultadosTribunais.forEach(item => {
-      const { tribunalInfo, hits } = item;
-      hits.forEach(hit => {
-        const src = hit._source || {};
-        const numProc = src.numeroProcesso;
-        if (numProc) {
-          todosProcessos.push({
-            numero: numProc,
-            tribunal: src.tribunal || tribunalInfo.sigla,
-            esfera: tribunalInfo.esfera,
-            status: src.classe?.nome || "Procedimento Judicial",
-            orgaoJulgador: src.orgaoJulgador?.nome || "Vara Judicial",
-            dataAjuizamento: src.dataAjuizamento ? new Date(src.dataAjuizamento).toLocaleDateString('pt-BR') : "Não informada",
-            linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
-          });
-        }
-      });
+    const hits = response.data.hits?.hits || [];
+    const processos = hits.map(hit => {
+      const src = hit._source || {};
+      const numProc = src.numeroProcesso || valor;
+      return {
+        numero: numProc,
+        tribunal: src.tribunal || "TJBA",
+        classe: src.classe?.nome || "Procedimento Judicial",
+        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Cível",
+        dataAjuizamento: src.dataAjuizamento ? new Date(src.dataAjuizamento).toLocaleDateString('pt-BR') : "Não informada",
+        linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
+      };
     });
 
-    res.json({
-      sucesso: true,
-      totalEncontrados: todosProcessos.length,
-      processos: todosProcessos
-    });
+    res.json({ sucesso: true, total: processos.length, processos });
 
   } catch (error) {
-    res.status(500).json({ sucesso: false, erro: "Falha na varredura multi-tribunais: " + error.message });
+    res.status(500).json({ sucesso: false, erro: error.message, processos: [] });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor JusSmart Multi-Tribunais rodando na porta ${PORT}`);
+  console.log(`Servidor JusSmart rodando na porta ${PORT}`);
 });
