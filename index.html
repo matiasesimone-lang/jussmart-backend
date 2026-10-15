@@ -29,7 +29,9 @@
     .tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: #334155; color: #fff; }
 
-    .btn-add-main { width: 100%; padding: 12px; background: #10b981; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.88rem; cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .actions-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+    .btn-add-main { flex: 2; padding: 12px; background: #10b981; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-reset-main { flex: 1; padding: 12px; background: #334155; border: 1px solid #475569; border-radius: 12px; color: #cbd5e1; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
     /* Cartões */
     .card { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
@@ -81,7 +83,10 @@
 
   <!-- SECÇÃO 1: MINHA CENTRAL -->
   <div id="secCentral">
-    <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Novo Processo</button>
+    <div class="actions-bar">
+      <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Processo</button>
+      <button class="btn-reset-main" onclick="reporProcessosPadrao()">↺ Repor Dados</button>
+    </div>
 
     <div class="search-box">
       <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar lista por nº, assunto ou vara...">
@@ -109,14 +114,14 @@
       <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" style="width:100%; padding:12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff;">
     </div>
 
-    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">Pesquisar nos Tribunais</button>
+    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff); width: 100%;" onclick="executarBuscaExterna()">Pesquisar nos Tribunais</button>
     <div class="loading" id="loadingMsg">⏳ Consultando a base do DataJud/CNJ...</div>
 
     <div id="areaResultadosBusca" style="margin-top: 16px;"></div>
   </div>
 </div>
 
-<!-- Modal para Adicionar Processo à Central -->
+<!-- Modal para Adicionar Processo -->
 <div class="modal" id="modalForm">
   <div class="modal-content">
     <div class="modal-title">Novo Processo para Acompanhamento</div>
@@ -222,11 +227,17 @@
 
   function obterProcessosLocais() {
     const dados = localStorage.getItem('jussmart_carteira');
-    if (!dados) {
+    if (!dados || JSON.parse(dados).length === 0) {
       localStorage.setItem('jussmart_carteira', JSON.stringify(baseInicial));
       return baseInicial;
     }
     return JSON.parse(dados);
+  }
+
+  function reporProcessosPadrao() {
+    localStorage.setItem('jussmart_carteira', JSON.stringify(baseInicial));
+    renderizarCentralLocal();
+    alert('Dados da Central repostos com sucesso!');
   }
 
   function guardarProcessosLocais(lista) {
@@ -236,8 +247,11 @@
 
   function renderizarCentralLocal() {
     const lista = obterProcessosLocais();
-    const termo = document.getElementById('filterInput').value.toLowerCase();
+    const inputEl = document.getElementById('filterInput');
+    const termo = inputEl ? inputEl.value.toLowerCase() : '';
     const container = document.getElementById('listaProcessosLocais');
+
+    if (!container) return;
 
     document.getElementById('cntTodos').innerText = lista.length;
     document.getElementById('cntAtivos').innerText = lista.filter(p => p.situacao === 'ATIVO').length;
@@ -418,4 +432,44 @@
 
   function salvarNovoProcesso() {
     const num = document.getElementById('formNum').value.trim();
-    const assunto = docum
+    const assunto = document.getElementById('formAssunto').value.trim() || 'Acompanhamento Judicial';
+    const orgao = document.getElementById('formOrgao').value.trim() || 'Tribunal de Justiça';
+    const situacao = document.getElementById('formSituacao').value;
+    const mov = document.getElementById('formMov').value.trim() || 'Cadastrado na Central';
+
+    if (!num) {
+      alert('Informe o número do processo.');
+      return;
+    }
+
+    const lista = obterProcessosLocais();
+    lista.unshift({
+      id: Date.now(),
+      numero: num,
+      tribunal: num.includes('.8.05') ? 'TJBA' : 'PJe',
+      situacao: situacao,
+      assunto: assunto,
+      orgaoJulgador: orgao,
+      ultimaMovimentacao: mov,
+      link: 'https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam'
+    });
+
+    guardarProcessosLocais(lista);
+    fecharModal();
+  }
+
+  function removerProcesso(id) {
+    if (confirm('Deseja eliminar este processo da sua central?')) {
+      let lista = obterProcessosLocais();
+      lista = lista.filter(p => p.id !== id);
+      guardarProcessosLocais(lista);
+    }
+  }
+
+  // Executa imediatamente no arranque da página
+  renderizarCentralLocal();
+  window.addEventListener('DOMContentLoaded', renderizarCentralLocal);
+</script>
+
+</body>
+</html>
