@@ -4,7 +4,6 @@ const axios = require('axios');
 
 const app = express();
 
-// Habilita CORS completo para qualquer origem (evita o bloqueio "Failed to fetch")
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
@@ -25,18 +24,30 @@ app.post('/api/buscar', async (req, res) => {
   const valorLimpo = valor.replace(/\D/g, '');
 
   try {
-    let matchQuery = {};
+    let mustQueries = [];
+
     if (tipo === 'numero') {
-      matchQuery = { "numeroProcesso": valorLimpo };
+      mustQueries.push({ match: { "numeroProcesso": valorLimpo } });
     } else if (tipo === 'cpf') {
-      matchQuery = { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo };
+      mustQueries.push({
+        bool: {
+          should: [
+            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo } },
+            { wildcard: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": `*${valorLimpo}*` } }
+          ]
+        }
+      });
     } else {
-      matchQuery = { "dadosBasicos.polo.parte.pessoa.nome": valor };
+      mustQueries.push({ match: { "dadosBasicos.polo.parte.pessoa.nome": valor } });
     }
 
     const bodyQuery = {
-      size: 50, // Retorna até 50 processos
-      query: { match: matchQuery }
+      size: 100,
+      query: {
+        bool: {
+          must: mustQueries
+        }
+      }
     };
 
     const response = await axios.post(
