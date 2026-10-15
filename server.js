@@ -10,19 +10,19 @@ app.use(express.json());
 const PORT = process.env.PORT || 10000;
 const DATAJUD_API_KEY = "cGFydGljaXBhbnRlOmRhdGFqdWRfcGFydGljaXBhbnRl";
 
-// Mapeamento dos principais tribunais pelo código CNJ (J.TR)
-const TRIBUNAIS_CNJ = {
-  "8.05": { sigla: "TJBA", index: "api_publica_tjba" },
-  "8.26": { sigla: "TJSP", index: "api_publica_tjsp" },
-  "8.19": { sigla: "TJRJ", index: "api_publica_tjrj" },
-  "8.13": { sigla: "TJMG", index: "api_publica_tjmg" },
-  "8.17": { sigla: "TJPE", index: "api_publica_tjpe" },
-  "4.05": { sigla: "TRF5", index: "api_publica_trf5" },
-  "5.05": { sigla: "TRT5", index: "api_publica_trt5" }
-};
+// Lista de endpoints dos Tribunais Estaduais, Federais e Trabalhistas
+const TRIBUNAIS_ALVO = [
+  { sigla: "TJBA", index: "api_publica_tjba", esfera: "Estadual (BA)" },
+  { sigla: "TRF1", index: "api_publica_trf1", esfera: "Federal (BA/DF/Região)" },
+  { sigla: "TRF5", index: "api_publica_trf5", esfera: "Federal (PE/AL/Região)" },
+  { sigla: "TRT5", index: "api_publica_trt5", esfera: "Trabalhista (BA)" },
+  { sigla: "TJPE", index: "api_publica_tjpe", esfera: "Estadual (PE)" },
+  { sigla: "TJSP", index: "api_publica_tjsp", esfera: "Estadual (SP)" },
+  { sigla: "TJRJ", index: "api_publica_tjrj", esfera: "Estadual (RJ)" }
+];
 
 app.get('/', (req, res) => {
-  res.json({ status: "API JusSmart Universal Online", timestamp: new Date() });
+  res.json({ status: "API JusSmart Multi-Tribunais Online", timestamp: new Date() });
 });
 
 app.post('/api/buscar', async (req, res) => {
@@ -33,79 +33,82 @@ app.post('/api/buscar', async (req, res) => {
   }
 
   const valorLimpo = valor.replace(/\D/g, '');
-  let targetIndex = "api_publica_tjba"; // Padrão TJBA
 
-  // Identificação automática do tribunal se for número CNJ de 20 dígitos
-  if (tipo === 'numero' && valorLimpo.length >= 16) {
-    const subStrJTR = `${valorLimpo.substring(13, 14)}.${valorLimpo.substring(14, 16)}`;
-    if (TRIBUNAIS_CNJ[subStrJTR]) {
-      targetIndex = TRIBUNAIS_CNJ[subStrJTR].index;
-    }
+  // Estruturação da consulta para a API do DataJud
+  let queryElastic = {};
+  if (tipo === 'numero') {
+    queryElastic = { match: { "numeroProcesso": valorLimpo } };
+  } else if (tipo === 'cpf') {
+    queryElastic = {
+      bool: {
+        should: [
+          { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumentoPrincipal": valorLimpo } },
+          { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo } }
+        ]
+      }
+    };
+  } else {
+    // Busca por nome flexível (todas as palavras presentes)
+    queryElastic = {
+      match: {
+        "dadosBasicos.polo.parte.pessoa.nome": {
+          query: valor,
+          operator: "and"
+        }
+      }
+    };
   }
 
-  try {
-    let queryElastic = {};
-
-    if (tipo === 'numero') {
-      queryElastic = {
-        match: { "numeroProcesso": valorLimpo }
-      };
-    } else if (tipo === 'cpf') {
-      queryElastic = {
-        bool: {
-          should: [
-            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumentoPrincipal": valorLimpo } },
-            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo } }
-          ]
-        }
-      };
-          } else {
-      // Busca por Nome com operador flexível (localiza as palavras do nome em qualquer ordem)
-      queryElastic = {
-        match: {
-          "dadosBasicos.polo.parte.pessoa.nome": {
-            query: valor,
-            operator: "and"
-          }
-        }
-      };
-    }
-
-    const response = await axios.post(
-      `https://api-publica.datajud.cnj.jus.br/${targetIndex}/_search`,
-      { size: 50, query: queryElastic },
+  // Executa as requisições em paralelo em todos os tribunais cadastrados
+  const buscasParalelas = TRIBUNAIS_ALVO.map(trib => {
+    return axios.post(
+      `https://api-publica.datajud.cnj.jus.br/${trib.index}/_search`,
+      { size: 25, query: queryElastic },
       {
         headers: {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 12000
+        timeout: 10000
       }
-    );
+    ).then(resData => ({ tribunalInfo: trib, hits: resData.data.hits?.hits || [] }))
+     .catch(() => ({ tribunalInfo: trib, hits: [] }));
+  });
 
-    const hits = response.data.hits?.hits || [];
-    const processos = hits.map(hit => {
-      const src = hit._source || {};
-      const numProc = src.numeroProcesso || valor;
-      const siglaTrib = src.tribunal || targetIndex.replace('api_publica_', '').toUpperCase();
+  try {
+    const resultadosTribunais = await Promise.all(buscasParalelas);
+    let todosProcessos = [];
 
-      return {
-        numero: numProc,
-        tribunal: siglaTrib,
-        status: src.classe?.nome || "Procedimento Judicial",
-        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Judicial",
-        dataAjuizamento: src.dataAjuizamento ? new Date(src.dataAjuizamento).toLocaleDateString('pt-BR') : "Não informada",
-        linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
-      };
+    resultadosTribunais.forEach(item => {
+      const { tribunalInfo, hits } = item;
+      hits.forEach(hit => {
+        const src = hit._source || {};
+        const numProc = src.numeroProcesso;
+        if (numProc) {
+          todosProcessos.push({
+            numero: numProc,
+            tribunal: src.tribunal || tribunalInfo.sigla,
+            esfera: tribunalInfo.esfera,
+            status: src.classe?.nome || "Procedimento Judicial",
+            orgaoJulgador: src.orgaoJulgador?.nome || "Vara Judicial",
+            dataAjuizamento: src.dataAjuizamento ? new Date(src.dataAjuizamento).toLocaleDateString('pt-BR') : "Não informada",
+            linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
+          });
+        }
+      });
     });
 
-    res.json({ sucesso: true, total: processos.length, processos });
+    res.json({
+      sucesso: true,
+      totalEncontrados: todosProcessos.length,
+      processos: todosProcessos
+    });
 
   } catch (error) {
-    res.status(500).json({ sucesso: false, erro: "Falha na consulta ao DataJud: " + error.message });
+    res.status(500).json({ sucesso: false, erro: "Falha na varredura multi-tribunais: " + error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor JusSmart Universal rodando na porta ${PORT}`);
+  console.log(`Servidor JusSmart Multi-Tribunais rodando na porta ${PORT}`);
 });
