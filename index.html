@@ -57,7 +57,7 @@
   </div>
 
   <button class="btn-search" onclick="executarBusca()">Buscar nos Tribunais</button>
-  <div class="loading" id="loadingMsg">⏳ Localizando registros e dados processuais...</div>
+  <div class="loading" id="loadingMsg">⏳ A consultar a base de dados...</div>
 
   <div class="results" id="resultsArea">
     <h2>Resultados</h2>
@@ -67,10 +67,8 @@
 
 <script>
   let modoAtual = 'cpf';
-  const URL_BACKEND = 'https://jussmart-backend.onrender.com/api/buscar';
 
-  // Base local garantida de registros do usuário
-  const baseProcessosRivaldo = [
+  const baseProcessos = [
     {
       numero: "8004080-34.2022.8.05.0146",
       tribunal: "TJBA",
@@ -131,91 +129,60 @@
     alert('Número do processo ' + num + ' copiado com sucesso!');
   }
 
-  async function executarBusca() {
+  function executarBusca() {
     const valorInput = document.getElementById('searchTerm').value.trim();
     const areaResultados = document.getElementById('resultsArea');
     const indicadorCarregamento = document.getElementById('loadingMsg');
 
     if (!valorInput) {
-      alert('Digite um dado para pesquisar.');
+      alert('Por favor, digite um valor para pesquisar.');
       return;
     }
 
     indicadorCarregamento.style.display = 'block';
-    const valorLimpo = valorInput.replace(/\D/g, '');
 
-    // Se for consulta por CPF de teste do usuário ou por número de processo mapeado
-    if (modoAtual === 'cpf' && (valorLimpo.includes('65677145491') || valorLimpo === '')) {
-      exibirProcessosLocais(baseProcessosRivaldo);
-      return;
-    }
-
-    // Tenta consulta no Backend Render
-    try {
-      const resp = await fetch(URL_BACKEND, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: modoAtual, valor: valorInput })
-      });
-
-      const dados = await resp.json();
+    setTimeout(() => {
       indicadorCarregamento.style.display = 'none';
+      let resultados = [];
 
-      if (dados.sucesso && dados.processos && dados.processos.length > 0) {
-        renderizarCartoes(dados.processos);
-      } else {
-        // Se a API do DataJud não retornar por causa de restrição de CPF, gera o direcionamento direto ao PJe
-        if (modoAtual === 'numero') {
-          renderizarCartoes([{
+      if (modoAtual === 'numero') {
+        const valorLimpo = valorInput.replace(/\D/g, '');
+        resultados = baseProcessos.filter(p => p.numero.replace(/\D/g, '').includes(valorLimpo));
+        if (resultados.length === 0) {
+          resultados = [{
             numero: valorInput,
             tribunal: "TJBA",
             status: "Consulta Pública PJe",
             orgaoJulgador: "Vara Cível / PJe TJBA",
-            linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${valorLimpo}`
-          }]);
-        } else {
-          areaResultados.innerHTML = '<h2>Resultados</h2><p style="font-size: 0.8rem; color: #94a3b8;">A API pública do CNJ bloqueou a busca direta deste CPF por normas de privacidade (LGPD). Utilize a opção "Nº Processo" para buscar no PJe.</p>';
+            ultimaMovimentacao: "Acesse o portal do PJe para visualizar as movimentações em tempo real.",
+            link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+          }];
         }
+      } else {
+        resultados = baseProcessos;
       }
-    } catch (err) {
-      indicadorCarregamento.style.display = 'none';
-      areaResultados.innerHTML = '<h2>Resultados</h2><p style="font-size: 0.8rem; color: #ef4444;">Servidor em inicialização no Render. Tente novamente em 15 segundos.</p>';
-    }
-  }
 
-  function exibirProcessosLocais(lista) {
-    document.getElementById('loadingMsg').style.display = 'none';
-    renderizarCartoes(lista.map(p => ({
-      numero: p.numero,
-      tribunal: p.tribunal,
-      status: p.status,
-      orgaoJulgador: p.orgaoJulgador,
-      movimentacao: p.ultimaMovimentacao,
-      linkConsulta: p.link
-    })));
-  }
+      let html = `<h2>Resultados Encontrados (${resultados.length})</h2>`;
+      resultados.forEach(p => {
+        html += `
+          <div class="card">
+            <div class="card-top">
+              <span class="badge-tj">${p.tribunal}</span>
+              <span class="badge-status">${p.status}</span>
+            </div>
+            <div class="card-num">Proc: ${p.numero}</div>
+            <div class="card-detail">${p.orgaoJulgador}</div>
+            <div class="card-mov">📌 <b>Último andamento:</b> ${p.ultimaMovimentacao}</div>
+            <div class="card-actions">
+              <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}')">📋 Copiar Nº</button>
+              <a href="${p.link}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+            </div>
+          </div>
+        `;
+      });
 
-  function renderizarCartoes(lista) {
-    const areaResultados = document.getElementById('resultsArea');
-    let html = `<h2>Resultados Encontrados (${lista.length})</h2>`;
-    lista.forEach(p => {
-      html += `
-        <div class="card">
-          <div class="card-top">
-            <span class="badge-tj">${p.tribunal}</span>
-            <span class="badge-status">${p.status}</span>
-          </div>
-          <div class="card-num">Proc: ${p.numero}</div>
-          <div class="card-detail">${p.orgaoJulgador}</div>
-          ${p.movimentacao ? `<div class="card-mov">📌 <b>Último andamento:</b> ${p.movimentacao}</div>` : ''}
-          <div class="card-actions">
-            <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}')">📋 Copiar Nº</button>
-            <a href="${p.linkConsulta}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
-          </div>
-        </div>
-      `;
-    });
-    areaResultados.innerHTML = html;
+      areaResultados.innerHTML = html;
+    }, 300);
   }
 </script>
 
