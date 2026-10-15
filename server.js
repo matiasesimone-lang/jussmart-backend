@@ -10,8 +10,19 @@ app.use(express.json());
 const PORT = process.env.PORT || 10000;
 const DATAJUD_API_KEY = "cGFydGljaXBhbnRlOmRhdGFqdWRfcGFydGljaXBhbnRl";
 
+// Mapeamento dos principais tribunais pelo código CNJ (J.TR)
+const TRIBUNAIS_CNJ = {
+  "8.05": { sigla: "TJBA", index: "api_publica_tjba" },
+  "8.26": { sigla: "TJSP", index: "api_publica_tjsp" },
+  "8.19": { sigla: "TJRJ", index: "api_publica_tjrj" },
+  "8.13": { sigla: "TJMG", index: "api_publica_tjmg" },
+  "8.17": { sigla: "TJPE", index: "api_publica_tjpe" },
+  "4.05": { sigla: "TRF5", index: "api_publica_trf5" },
+  "5.05": { sigla: "TRT5", index: "api_publica_trt5" }
+};
+
 app.get('/', (req, res) => {
-  res.json({ status: "API JusSmart Online", timestamp: new Date() });
+  res.json({ status: "API JusSmart Universal Online", timestamp: new Date() });
 });
 
 app.post('/api/buscar', async (req, res) => {
@@ -22,43 +33,50 @@ app.post('/api/buscar', async (req, res) => {
   }
 
   const valorLimpo = valor.replace(/\D/g, '');
+  let targetIndex = "api_publica_tjba"; // Padrão TJBA
+
+  // Identificação automática do tribunal se for número CNJ de 20 dígitos
+  if (tipo === 'numero' && valorLimpo.length >= 16) {
+    const subStrJTR = `${valorLimpo.substring(13, 14)}.${valorLimpo.substring(14, 16)}`;
+    if (TRIBUNAIS_CNJ[subStrJTR]) {
+      targetIndex = TRIBUNAIS_CNJ[subStrJTR].index;
+    }
+  }
 
   try {
-    let mustQueries = [];
+    let queryElastic = {};
 
     if (tipo === 'numero') {
-      mustQueries.push({ match: { "numeroProcesso": valorLimpo } });
+      queryElastic = {
+        match: { "numeroProcesso": valorLimpo }
+      };
     } else if (tipo === 'cpf') {
-      mustQueries.push({
+      queryElastic = {
         bool: {
           should: [
-            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo } },
-            { wildcard: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": `*${valorLimpo}*` } }
+            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumentoPrincipal": valorLimpo } },
+            { match: { "dadosBasicos.polo.parte.pessoa.numeroDocumento": valorLimpo } }
           ]
         }
-      });
+      };
     } else {
-      mustQueries.push({ match: { "dadosBasicos.polo.parte.pessoa.nome": valor } });
+      // Busca por Nome Completo ou Parcial
+      queryElastic = {
+        match_phrase: {
+          "dadosBasicos.polo.parte.pessoa.nome": valor
+        }
+      };
     }
 
-    const bodyQuery = {
-      size: 100,
-      query: {
-        bool: {
-          must: mustQueries
-        }
-      }
-    };
-
     const response = await axios.post(
-      'https://api-publica.datajud.cnj.jus.br/api_publica_tjba/_search',
-      bodyQuery,
+      `https://api-publica.datajud.cnj.jus.br/${targetIndex}/_search`,
+      { size: 50, query: queryElastic },
       {
         headers: {
           'Authorization': `APIKey ${DATAJUD_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 15000
+        timeout: 12000
       }
     );
 
@@ -66,22 +84,25 @@ app.post('/api/buscar', async (req, res) => {
     const processos = hits.map(hit => {
       const src = hit._source || {};
       const numProc = src.numeroProcesso || valor;
+      const siglaTrib = src.tribunal || targetIndex.replace('api_publica_', '').toUpperCase();
+
       return {
         numero: numProc,
-        tribunal: src.tribunal || "TJBA",
-        status: src.classe?.nome || "Procedimento Comum Cível",
-        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Cível",
+        tribunal: siglaTrib,
+        status: src.classe?.nome || "Procedimento Judicial",
+        orgaoJulgador: src.orgaoJulgador?.nome || "Vara Judicial",
+        dataAjuizamento: src.dataAjuizamento ? new Date(src.dataAjuizamento).toLocaleDateString('pt-BR') : "Não informada",
         linkConsulta: `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${numProc}`
       };
     });
 
-    res.json({ sucesso: true, processos });
+    res.json({ sucesso: true, total: processos.length, processos });
 
   } catch (error) {
-    res.status(500).json({ sucesso: false, erro: error.message });
+    res.status(500).json({ sucesso: false, erro: "Falha na consulta ao DataJud: " + error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor JusSmart rodando na porta ${PORT}`);
+  console.log(`Servidor JusSmart Universal rodando na porta ${PORT}`);
 });
