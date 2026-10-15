@@ -59,11 +59,14 @@ app.post('/api/buscar', async (req, res) => {
           ]
         }
       };
-    } else {
-      // Busca por Nome Completo ou Parcial
+          } else {
+      // Busca por Nome com operador flexível (localiza as palavras do nome em qualquer ordem)
       queryElastic = {
-        match_phrase: {
-          "dadosBasicos.polo.parte.pessoa.nome": valor
+        match: {
+          "dadosBasicos.polo.parte.pessoa.nome": {
+            query: valor,
+            operator: "and"
+          }
         }
       };
     }
