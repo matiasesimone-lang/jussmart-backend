@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JusSmart</title>
+  <title>JusSmart - Busca Processual Universal</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
@@ -44,7 +44,7 @@
   <div class="header">
     <div class="logo-badge">⚖️ JusSmart</div>
     <h1>Consulta Processual</h1>
-    <p>Busca inteligente nos Tribunais de Justiça</p>
+    <p>Buscador Inteligente de Processos Judiciais</p>
   </div>
 
   <div class="tabs">
@@ -58,8 +58,8 @@
     <input type="text" id="searchTerm" value="" placeholder="Ex: 000.000.000-00">
   </div>
 
-  <button class="btn-search" onclick="executarBusca()">Buscar nos Tribunais</button>
-  <div class="loading" id="loadingMsg">⏳ Localizando registros e dados processuais...</div>
+  <button class="btn-search" onclick="executarBusca()">Pesquisar Processos</button>
+  <div class="loading" id="loadingMsg">⏳ Consultando a base de dados dos tribunais em tempo real...</div>
 
   <div class="results" id="resultsArea">
     <h2>Resultados</h2>
@@ -69,42 +69,7 @@
 
 <script>
   let modoAtual = 'cpf';
-
-  // Registros mapeados do titular do sistema
-  const baseProcessosTitular = [
-    {
-      numero: "8004080-34.2022.8.05.0146",
-      tribunal: "TJBA",
-      status: "Exoneração de Alimentos",
-      orgaoJulgador: "Vara de Família - Comarca de Juazeiro",
-      ultimaMovimentacao: "Concluso para despacho/decisão do Juiz.",
-      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-    },
-    {
-      numero: "8003476-44.2020.8.05.0146",
-      tribunal: "TJBA",
-      status: "Procedimento Comum / FUNPREV",
-      orgaoJulgador: "1ª Vara Fazenda Pública - Juazeiro",
-      ultimaMovimentacao: "Juntada de petição de manifestação da parte autora.",
-      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-    },
-    {
-      numero: "0003373-96.2008.8.05.0146",
-      tribunal: "TJBA",
-      status: "Execução Contra a Fazenda Pública",
-      orgaoJulgador: "Vara da Fazenda Pública - Juazeiro",
-      ultimaMovimentacao: "Expedição de requisição/precatório efetuada.",
-      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-    },
-    {
-      numero: "0063666-74.2011.8.05.0001",
-      tribunal: "TJBA",
-      status: "Ordinária / Gratificações PM",
-      orgaoJulgador: "6ª Vara da Fazenda Pública - Salvador",
-      ultimaMovimentacao: "Aguardando cumprimento de ordem de pagamento.",
-      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-    }
-  ];
+  const URL_BACKEND = 'https://jussmart-backend.onrender.com/api/buscar';
 
   function alterarAba(modo) {
     modoAtual = modo;
@@ -123,7 +88,7 @@
     } else {
       document.getElementById('btnNome').classList.add('active');
       label.innerText = 'Digite o Nome Completo';
-      input.placeholder = 'Ex: João da Silva';
+      input.placeholder = 'Ex: Maria das Dores Silva';
     }
   }
 
@@ -131,94 +96,95 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(num);
     } else {
-      const inputTemp = document.createElement('input');
-      inputTemp.value = num;
-      document.body.appendChild(inputTemp);
-      inputTemp.select();
+      const temp = document.createElement('input');
+      temp.value = num;
+      document.body.appendChild(temp);
+      temp.select();
       document.execCommand('copy');
-      document.body.removeChild(inputTemp);
+      document.body.removeChild(temp);
     }
     
-    const textoOriginal = btn.innerHTML;
+    const txt = btn.innerHTML;
     btn.innerHTML = '✅ Copiado!';
     btn.style.background = '#059669';
     setTimeout(() => {
-      btn.innerHTML = textoOriginal;
+      btn.innerHTML = txt;
       btn.style.background = '#334155';
     }, 2000);
   }
 
-  function executarBusca() {
+  async function executarBusca() {
     const valorInput = document.getElementById('searchTerm').value.trim();
     const areaResultados = document.getElementById('resultsArea');
     const indicadorCarregamento = document.getElementById('loadingMsg');
 
     if (!valorInput) {
-      alert('Por favor, digite um valor para pesquisar.');
+      alert('Por favor, digite um dado para pesquisar.');
       return;
     }
 
     indicadorCarregamento.style.display = 'block';
+    areaResultados.innerHTML = '<h2>Resultados</h2>';
 
-    setTimeout(() => {
+    try {
+      const resp = await fetch(URL_BACKEND, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: modoAtual, valor: valorInput })
+      });
+
+      const dados = await resp.json();
       indicadorCarregamento.style.display = 'none';
-      let resultados = [];
-      const valorLimpo = valorInput.replace(/\D/g, '');
-      const textoMinusculo = valorInput.toLowerCase();
 
-      // Validação de consulta para os dados cadastrados do titular
-      const ehDadosTitular = (modoAtual === 'cpf' && valorLimpo.includes('65677145491')) ||
-                             (modoAtual === 'nome' && textoMinusculo.includes('rivaldo'));
-
-      if (ehDadosTitular) {
-        resultados = baseProcessosTitular;
-      } else if (modoAtual === 'numero') {
-        const enc = baseProcessosTitular.filter(p => p.numero.replace(/\D/g, '').includes(valorLimpo));
-        if (enc.length > 0) {
-          resultados = enc;
-        } else {
-          resultados = [{
-            numero: valorInput,
-            tribunal: "TJBA",
-            status: "Consulta Pública PJe",
-            orgaoJulgador: "Vara Cível / PJe TJBA",
-            ultimaMovimentacao: "Clique em 'Abrir PJe' para realizar a consulta pública deste processo diretamente no portal do tribunal.",
-            link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-          }];
-        }
+      if (dados.sucesso && dados.processos && dados.processos.length > 0) {
+        let html = `<h2>Resultados Encontrados (${dados.processos.length})</h2>`;
+        dados.processos.forEach(p => {
+          html += `
+            <div class="card">
+              <div class="card-top">
+                <span class="badge-tj">${p.tribunal}</span>
+                <span class="badge-status">${p.status}</span>
+              </div>
+              <div class="card-num">Proc: ${p.numero}</div>
+              <div class="card-detail">${p.orgaoJulgador}</div>
+              <div class="card-mov">📌 <b>Data de Ajuizamento:</b> ${p.dataAjuizamento}</div>
+              <div class="card-actions">
+                <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
+                <a href="${p.linkConsulta}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+              </div>
+            </div>
+          `;
+        });
+        areaResultados.innerHTML = html;
       } else {
-        // Para pesquisas de terceiros (CPF ou Nome)
-        resultados = [{
-          numero: "Consulta Externa / PJe",
-          tribunal: "TJBA",
-          status: "Busca Nominal / CPF",
-          orgaoJulgador: "Portal do PJe",
-          ultimaMovimentacao: `Por normas de privacidade (LGPD) da API pública do CNJ, a busca para "${valorInput}" deve ser realizada com validação diretamente no portal do PJe.`,
-          link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
-        }];
-      }
-
-      let html = `<h2>Resultados Encontrados (${resultados.length})</h2>`;
-      resultados.forEach((p, idx) => {
-        html += `
+        // Fallback dinâmico para consulta direta no portal do tribunal
+        const valorLimpo = valorInput.replace(/\D/g, '');
+        areaResultados.innerHTML = `
+          <h2>Resultados</h2>
           <div class="card">
             <div class="card-top">
-              <span class="badge-tj">${p.tribunal}</span>
-              <span class="badge-status">${p.status}</span>
+              <span class="badge-tj">TJBA / PJe</span>
+              <span class="badge-status">Busca Direta</span>
             </div>
-            <div class="card-num">Proc: ${p.numero}</div>
-            <div class="card-detail">${p.orgaoJulgador}</div>
-            <div class="card-mov">📌 <b>Informação:</b> ${p.ultimaMovimentacao}</div>
+            <div class="card-num">Pesquisa: ${valorInput}</div>
+            <div class="card-detail">Consulta Externa no Portal Oficial do Tribunal</div>
+            <div class="card-mov">📌 <b>Aviso:</b> Nenhum registro direto na API pública do CNJ ou busca requer validação pública no PJe. Clique abaixo para buscar no portal do tribunal.</div>
             <div class="card-actions">
-              <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
-              <a href="${p.link}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+              <button class="btn-action btn-copy" onclick="copiarNumero('${valorInput}', this)">📋 Copiar Termo</button>
+              <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 Buscar no PJe</a>
             </div>
           </div>
         `;
-      });
-
-      areaResultados.innerHTML = html;
-    }, 300);
+      }
+    } catch (err) {
+      indicadorCarregamento.style.display = 'none';
+      areaResultados.innerHTML = `
+        <h2>Resultados</h2>
+        <p style="font-size: 0.85rem; color: #00f0ff; text-align: center; padding: 12px; background: rgba(0,240,255,0.05); border-radius: 10px;">
+          ⚡ O servidor Render está a inicializar o serviço gratuito. Por favor, aguarde 15 segundos e clique em <b>Pesquisar Processos</b> novamente.
+        </p>
+      `;
+    }
   }
 </script>
 
