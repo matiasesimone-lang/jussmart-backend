@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JusSmart - Carteira Processual</title>
+  <title>JusSmart - Central e Buscador</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
@@ -11,33 +11,40 @@
     body { background: #0f172a; color: #f8fafc; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
     .app-card { width: 100%; max-width: 450px; background: #1e293b; border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; margin-top: 10px; }
     
-    .header { text-align: center; margin-bottom: 20px; }
-    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 8px; }
+    .header { text-align: center; margin-bottom: 16px; }
+    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 6px; }
     .header h1 { font-size: 1.4rem; color: #fff; }
     .header p { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
 
-    .search-box { margin-bottom: 14px; }
-    .search-box input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: #fff; font-size: 0.9rem; outline: none; }
+    /* Modos Principais */
+    .mode-switcher { display: flex; gap: 6px; background: #0f172a; padding: 4px; border-radius: 14px; margin-bottom: 18px; border: 1px solid #334155; }
+    .mode-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 0.82rem; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .mode-btn.active { background: linear-gradient(135deg, #1e50ff, #00f0ff); color: #fff; }
 
-    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
-    .tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-    .tab-btn.active { background: #1e50ff; color: #fff; }
+    /* Elementos da Minha Central */
+    .search-box { margin-bottom: 12px; }
+    .search-box input { width: 100%; padding: 11px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none; }
 
-    .btn-add-main { width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .tab-btn.active { background: #334155; color: #fff; }
 
-    .card { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; }
+    .btn-add-main { width: 100%; padding: 12px; background: #10b981; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.88rem; cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* Cartões */
+    .card { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .badge-tj { background: #1e50ff; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
     .badge-ativo { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; }
     .badge-inativo { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; }
     
-    .card-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; }
+    .card-title { font-size: 0.92rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; }
     .card-num { font-size: 0.85rem; font-weight: 600; color: #00f0ff; margin-bottom: 6px; word-break: break-all; }
     .card-detail { font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px; }
     .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 8px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
 
-    .card-actions { display: flex; gap: 6px; }
-    .btn-action { flex: 1; text-align: center; padding: 9px; font-size: 0.72rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-action { flex: 1; min-width: 95px; text-align: center; padding: 9px; font-size: 0.72rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .btn-copy { background: #334155; color: #f8fafc; }
     .btn-access { background: rgba(30, 80, 255, 0.3); border: 1px solid #1e50ff; color: #00f0ff; }
     .btn-delete { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; width: 36px; flex: none; }
@@ -45,7 +52,7 @@
     /* Modal Form */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 16px; z-index: 999; }
     .modal-content { background: #1e293b; width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
-    .modal-title { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 14px; text-align: center; }
+    .modal-title { font-size: 1.05rem; font-weight: bold; color: #fff; margin-bottom: 14px; text-align: center; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
     .form-group input, .form-group select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; }
@@ -53,6 +60,8 @@
     .btn-modal { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.85rem; }
     .btn-save { background: #10b981; color: #fff; }
     .btn-cancel { background: #334155; color: #94a3b8; }
+
+    .loading { text-align: center; color: #00f0ff; font-size: 0.85rem; margin-top: 12px; display: none; }
   </style>
 </head>
 <body>
@@ -60,26 +69,54 @@
 <div class="app-card">
   <div class="header">
     <div class="logo-badge">⚖️ JusSmart</div>
-    <h1>Central Processual</h1>
-    <p>Acompanhamento e Gestão de Processos</p>
+    <h1>Plataforma Processual</h1>
+    <p>Gestão de Processos e Consulta Externa</p>
   </div>
 
-  <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Novo Processo</button>
-
-  <div class="search-box">
-    <input type="text" id="filterInput" onkeyup="filtrarLista()" placeholder="🔍 Filtrar por nº, assunto ou vara...">
+  <!-- Alternador do Modo Principal -->
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btnModoCentral" onclick="trocarModoPrincipal('central')">📋 Minha Central</button>
+    <button class="mode-btn" id="btnModoBusca" onclick="trocarModoPrincipal('busca')">🔍 Busca Externa</button>
   </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tabTodos" onclick="filtrarAba('TODOS')">Todos (<span id="cntTodos">0</span>)</button>
-    <button class="tab-btn" id="tabAtivos" onclick="filtrarAba('ATIVO')">🟢 Ativos (<span id="cntAtivos">0</span>)</button>
-    <button class="tab-btn" id="tabInativos" onclick="filtrarAba('INATIVO')">🔴 Inativos (<span id="cntInativos">0</span>)</button>
+  <!-- SECÇÃO 1: MINHA CENTRAL -->
+  <div id="secCentral">
+    <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Novo Processo</button>
+
+    <div class="search-box">
+      <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar lista por nº, assunto ou vara...">
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tabTodos" onclick="filtrarAbaLocal('TODOS')">Todos (<span id="cntTodos">0</span>)</button>
+      <button class="tab-btn" id="tabAtivos" onclick="filtrarAbaLocal('ATIVO')">🟢 Ativos (<span id="cntAtivos">0</span>)</button>
+      <button class="tab-btn" id="tabInativos" onclick="filtrarAbaLocal('INATIVO')">🔴 Inativos (<span id="cntInativos">0</span>)</button>
+    </div>
+
+    <div id="listaProcessosLocais"></div>
   </div>
 
-  <div id="listaProcessos"></div>
+  <!-- SECÇÃO 2: BUSCA EXTERNA -->
+  <div id="secBusca" style="display: none;">
+    <div class="tabs">
+      <button class="tab-btn active" id="btnTipoCpf" onclick="alterarTipoBusca('cpf')">CPF / CNPJ</button>
+      <button class="tab-btn" id="btnTipoNum" onclick="alterarTipoBusca('numero')">Nº Processo</button>
+      <button class="tab-btn" id="btnTipoNome" onclick="alterarTipoBusca('nome')">Nome</button>
+    </div>
+
+    <div class="form-group">
+      <label id="labelTipoBusca">Digite o CPF ou CNPJ para pesquisar</label>
+      <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" style="width:100%; padding:12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff;">
+    </div>
+
+    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">Pesquisar nos Tribunais</button>
+    <div class="loading" id="loadingMsg">⏳ Consultando a base do DataJud/CNJ...</div>
+
+    <div id="areaResultadosBusca" style="margin-top: 16px;"></div>
+  </div>
 </div>
 
-<!-- Modal para Adicionar Processo -->
+<!-- Modal para Adicionar Processo à Central -->
 <div class="modal" id="modalForm">
   <div class="modal-content">
     <div class="modal-title">Novo Processo para Acompanhamento</div>
@@ -120,9 +157,11 @@
 </div>
 
 <script>
-  let filtroAbaAtual = 'TODOS';
+  let modoPrincipal = 'central';
+  let tipoBuscaExterna = 'cpf';
+  let filtroAbaLocalAtual = 'TODOS';
+  const URL_BACKEND = 'https://jussmart-backend.onrender.com/api/buscar';
 
-  // Base inicial padrão
   const baseInicial = [
     {
       id: 1,
@@ -166,46 +205,54 @@
     }
   ];
 
-  // Carrega do LocalStorage do telemóvel ou inicia com os padrões
-  function obterProcessos() {
-    const dadosSalvos = localStorage.getItem('jussmart_carteira');
-    if (!dadosSalvos) {
+  function trocarModoPrincipal(modo) {
+    modoPrincipal = modo;
+    if (modo === 'central') {
+      document.getElementById('btnModoCentral').classList.add('active');
+      document.getElementById('btnModoBusca').classList.remove('active');
+      document.getElementById('secCentral').style.display = 'block';
+      document.getElementById('secBusca').style.display = 'none';
+    } else {
+      document.getElementById('btnModoBusca').classList.add('active');
+      document.getElementById('btnModoCentral').classList.remove('active');
+      document.getElementById('secBusca').style.display = 'block';
+      document.getElementById('secCentral').style.display = 'none';
+    }
+  }
+
+  function obterProcessosLocais() {
+    const dados = localStorage.getItem('jussmart_carteira');
+    if (!dados) {
       localStorage.setItem('jussmart_carteira', JSON.stringify(baseInicial));
       return baseInicial;
     }
-    return JSON.parse(dadosSalvos);
+    return JSON.parse(dados);
   }
 
-  function guardarProcessos(lista) {
+  function guardarProcessosLocais(lista) {
     localStorage.setItem('jussmart_carteira', JSON.stringify(lista));
-    renderizarInterface();
+    renderizarCentralLocal();
   }
 
-  function renderizarInterface() {
-    const lista = obterProcessos();
-    const termoBusca = document.getElementById('filterInput').value.toLowerCase();
-    const container = document.getElementById('listaProcessos');
+  function renderizarCentralLocal() {
+    const lista = obterProcessosLocais();
+    const termo = document.getElementById('filterInput').value.toLowerCase();
+    const container = document.getElementById('listaProcessosLocais');
 
-    // Atualiza Contadores nas Abas
-    const qtdTodos = lista.length;
-    const qtdAtivos = lista.filter(p => p.situacao === 'ATIVO').length;
-    const qtdInativos = lista.filter(p => p.situacao === 'INATIVO').length;
+    document.getElementById('cntTodos').innerText = lista.length;
+    document.getElementById('cntAtivos').innerText = lista.filter(p => p.situacao === 'ATIVO').length;
+    document.getElementById('cntInativos').innerText = lista.filter(p => p.situacao === 'INATIVO').length;
 
-    document.getElementById('cntTodos').innerText = qtdTodos;
-    document.getElementById('cntAtivos').innerText = qtdAtivos;
-    document.getElementById('cntInativos').innerText = qtdInativos;
-
-    // Filtra lista
     let filtrados = lista.filter(p => {
-      const atendeAba = (filtroAbaAtual === 'TODOS') || (p.situacao === filtroAbaAtual);
-      const atendeTexto = p.numero.toLowerCase().includes(termoBusca) ||
-                           p.assunto.toLowerCase().includes(termoBusca) ||
-                           p.orgaoJulgador.toLowerCase().includes(termoBusca);
-      return atendeAba && atendeTexto;
+      const okAba = (filtroAbaLocalAtual === 'TODOS') || (p.situacao === filtroAbaLocalAtual);
+      const okTexto = p.numero.toLowerCase().includes(termo) ||
+                      p.assunto.toLowerCase().includes(termo) ||
+                      p.orgaoJulgador.toLowerCase().includes(termo);
+      return okAba && okTexto;
     });
 
     if (filtrados.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 20px;">Nenhum processo encontrado nesta categoria.</p>`;
+      container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 20px;">Nenhum processo nesta vista.</p>`;
       return;
     }
 
@@ -237,17 +284,112 @@
     container.innerHTML = html;
   }
 
-  function filtrarAba(aba) {
-    filtroAbaAtual = aba;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  function filtrarAbaLocal(aba) {
+    filtroAbaLocalAtual = aba;
+    document.querySelectorAll('#secCentral .tab-btn').forEach(b => b.classList.remove('active'));
     if (aba === 'TODOS') document.getElementById('tabTodos').classList.add('active');
     if (aba === 'ATIVO') document.getElementById('tabAtivos').classList.add('active');
     if (aba === 'INATIVO') document.getElementById('tabInativos').classList.add('active');
-    renderizarInterface();
+    renderizarCentralLocal();
   }
 
-  function filtrarLista() {
-    renderizarInterface();
+  function filtrarListaLocal() {
+    renderizarCentralLocal();
+  }
+
+  function alterarTipoBusca(tipo) {
+    tipoBuscaExterna = tipo;
+    document.querySelectorAll('#secBusca .tab-btn').forEach(b => b.classList.remove('active'));
+    const label = document.getElementById('labelTipoBusca');
+    const input = document.getElementById('inputBuscaExterna');
+
+    if (tipo === 'cpf') {
+      document.getElementById('btnTipoCpf').classList.add('active');
+      label.innerText = 'Digite o CPF ou CNPJ para pesquisar';
+      input.placeholder = 'Ex: 000.000.000-00';
+    } else if (tipo === 'numero') {
+      document.getElementById('btnTipoNum').classList.add('active');
+      label.innerText = 'Digite o Número Unificado do Processo';
+      input.placeholder = 'Ex: 8004080-34.2022.8.05.0146';
+    } else {
+      document.getElementById('btnTipoNome').classList.add('active');
+      label.innerText = 'Digite o Nome Completo';
+      input.placeholder = 'Ex: Maria das Dores Silva';
+    }
+  }
+
+  async function executarBuscaExterna() {
+    const valor = document.getElementById('inputBuscaExterna').value.trim();
+    const area = document.getElementById('areaResultadosBusca');
+    const loading = document.getElementById('loadingMsg');
+
+    if (!valor) {
+      alert('Por favor, digite um valor para pesquisar.');
+      return;
+    }
+
+    loading.style.display = 'block';
+    area.innerHTML = '';
+
+    try {
+      const resp = await fetch(URL_BACKEND, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: tipoBuscaExterna, valor: valor })
+      });
+
+      const dados = await resp.json();
+      loading.style.display = 'none';
+
+      if (dados.sucesso && dados.processos && dados.processos.length > 0) {
+        let html = `<h2 style="font-size:0.85rem; color:#94a3b8; margin-bottom:10px;">RESULTADOS ENCONTRADOS (${dados.processos.length})</h2>`;
+        dados.processos.forEach(p => {
+          html += `
+            <div class="card">
+              <div class="card-top">
+                <span class="badge-tj">${p.tribunal}</span>
+                <span class="badge-ativo">DataJud CNJ</span>
+              </div>
+              <div class="card-title">${p.classe || 'Procedimento Judicial'}</div>
+              <div class="card-num">Nº: ${p.numero}</div>
+              <div class="card-detail">${p.orgaoJulgador}</div>
+              <div class="card-mov">📌 <b>Data de Ajuizamento:</b> ${p.dataAjuizamento || 'Não informada'}</div>
+              <div class="card-actions">
+                <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
+                <a href="${p.linkConsulta}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+              </div>
+            </div>
+          `;
+        });
+        area.innerHTML = html;
+      } else {
+        renderizarCardAtalhoPJe(valor);
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      renderizarCardAtalhoPJe(valor);
+    }
+  }
+
+  function renderizarCardAtalhoPJe(valor) {
+    const area = document.getElementById('areaResultadosBusca');
+    const encoded = encodeURIComponent(valor);
+    area.innerHTML = `
+      <div class="card">
+        <div class="card-top">
+          <span class="badge-tj">TJBA / PJe</span>
+          <span class="badge-inativo">CONSULTA DIRETA</span>
+        </div>
+        <div class="card-num">Pesquisa: ${valor}</div>
+        <div class="card-detail">Acesso Direto ao Portal do Tribunal</div>
+        <div class="card-mov">📌 A API pública do CNJ restringe retornos diretos por CPF/Nome devido à LGPD. Utilize os botões abaixo para consultar no PJe ou Jusbrasil em 1 toque:</div>
+        <div class="card-actions">
+          <button class="btn-action btn-copy" onclick="copiarNumero('${valor}', this)">📋 Copiar Termo</button>
+          <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 PJe TJBA</a>
+          <a href="https://www.jusbrasil.com.br/busca?q=${encoded}" target="_blank" class="btn-action btn-access">🔗 Jusbrasil</a>
+        </div>
+      </div>
+    `;
   }
 
   function copiarNumero(num, btn) {
@@ -271,62 +413,9 @@
     }, 2000);
   }
 
-  function abrirModal() {
-    document.getElementById('modalForm').style.display = 'flex';
-  }
-
-  function fecharModal() {
-    document.getElementById('modalForm').style.display = 'none';
-    limparFormulario();
-  }
-
-  function limparFormulario() {
-    document.getElementById('formNum').value = '';
-    document.getElementById('formAssunto').value = '';
-    document.getElementById('formOrgao').value = '';
-    document.getElementById('formMov').value = '';
-  }
+  function abrirModal() { document.getElementById('modalForm').style.display = 'flex'; }
+  function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
 
   function salvarNovoProcesso() {
     const num = document.getElementById('formNum').value.trim();
-    const assunto = document.getElementById('formAssunto').value.trim() || 'Acompanhamento Judicial';
-    const orgao = document.getElementById('formOrgao').value.trim() || 'Tribunal de Justiça';
-    const situacao = document.getElementById('formSituacao').value;
-    const mov = document.getElementById('formMov').value.trim() || 'Cadastrado no JusSmart';
-
-    if (!num) {
-      alert('Por favor, informe pelo menos o número do processo.');
-      return;
-    }
-
-    const lista = obterProcessos();
-    const novoProc = {
-      id: Date.now(),
-      numero: num,
-      tribunal: num.includes('.8.05') ? 'TJBA' : 'PJe',
-      situacao: situacao,
-      assunto: assunto,
-      orgaoJulgador: orgao,
-      ultimaMovimentacao: mov,
-      link: 'https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam'
-    };
-
-    lista.unshift(novoProc);
-    guardarProcessos(lista);
-    fecharModal();
-  }
-
-  function removerProcesso(id) {
-    if (confirm('Deseja remover este processo da sua central de acompanhamento?')) {
-      let lista = obterProcessos();
-      lista = lista.filter(p => p.id !== id);
-      guardarProcessos(lista);
-    }
-  }
-
-  // Inicializa ao carregar
-  window.addEventListener('DOMContentLoaded', renderizarInterface);
-</script>
-
-</body>
-</html>
+    const assunto = docum
