@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JusSmart - Busca Processual Universal</title>
+  <title>JusSmart - Buscador Universal</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #0f172a; color: #f8fafc; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
     .app-card { width: 100%; max-width: 440px; background: #1e293b; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
-    .header { text-align: center; margin-bottom: 24px; }
-    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 12px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 10px; }
     .header h1 { font-size: 1.5rem; color: #fff; }
     .header p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
     .tabs { display: flex; gap: 6px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
@@ -20,15 +20,15 @@
     .input-box { margin-bottom: 16px; }
     .input-box label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
     .input-box input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.95rem; outline: none; }
-    .btn-search { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e50ff, #00f0ff); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; }
+    .btn-search { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e50ff, #00f0ff); border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
     .btn-search:active { opacity: 0.8; }
     .results { margin-top: 24px; }
     .results h2 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     .card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .badge-tj { background: #1e50ff; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
-    .badge-status { background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid #00f0ff; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; }
-    .card-num { font-size: 0.9rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; word-break: break-all; }
+    .badge-info { background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid #00f0ff; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; }
+    .card-num { font-size: 0.95rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; word-break: break-all; }
     .card-detail { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
     .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
     .card-actions { display: flex; gap: 8px; }
@@ -44,7 +44,7 @@
   <div class="header">
     <div class="logo-badge">⚖️ JusSmart</div>
     <h1>Consulta Processual</h1>
-    <p>Buscador Inteligente de Processos Judiciais</p>
+    <p>Buscador Dinâmico de Processos</p>
   </div>
 
   <div class="tabs">
@@ -59,7 +59,7 @@
   </div>
 
   <button class="btn-search" onclick="executarBusca()">Pesquisar Processos</button>
-  <div class="loading" id="loadingMsg">⏳ Consultando a base de dados dos tribunais em tempo real...</div>
+  <div class="loading" id="loadingMsg">⏳ Consultando a base do DataJud/CNJ...</div>
 
   <div class="results" id="resultsArea">
     <h2>Resultados</h2>
@@ -119,7 +119,7 @@
     const indicadorCarregamento = document.getElementById('loadingMsg');
 
     if (!valorInput) {
-      alert('Por favor, digite um dado para pesquisar.');
+      alert('Por favor, digite um valor para pesquisar.');
       return;
     }
 
@@ -137,17 +137,17 @@
       indicadorCarregamento.style.display = 'none';
 
       if (dados.sucesso && dados.processos && dados.processos.length > 0) {
-        let html = `<h2>Resultados Encontrados (${dados.processos.length})</h2>`;
+        let html = `<h2>Processos Encontrados (${dados.processos.length})</h2>`;
         dados.processos.forEach(p => {
           html += `
             <div class="card">
               <div class="card-top">
                 <span class="badge-tj">${p.tribunal}</span>
-                <span class="badge-status">${p.status}</span>
+                <span class="badge-info">DataJud CNJ</span>
               </div>
-              <div class="card-num">Proc: ${p.numero}</div>
-              <div class="card-detail">${p.orgaoJulgador}</div>
-              <div class="card-mov">📌 <b>Data de Ajuizamento:</b> ${p.dataAjuizamento}</div>
+              <div class="card-num">Nº Processo: ${p.numero}</div>
+              <div class="card-detail">${p.classe} - ${p.orgaoJulgador}</div>
+              <div class="card-mov">📌 <b>Ajuizamento:</b> ${p.dataAjuizamento}</div>
               <div class="card-actions">
                 <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
                 <a href="${p.linkConsulta}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
@@ -157,34 +157,33 @@
         });
         areaResultados.innerHTML = html;
       } else {
-        // Fallback dinâmico para consulta direta no portal do tribunal
-        const valorLimpo = valorInput.replace(/\D/g, '');
-        areaResultados.innerHTML = `
-          <h2>Resultados</h2>
-          <div class="card">
-            <div class="card-top">
-              <span class="badge-tj">TJBA / PJe</span>
-              <span class="badge-status">Busca Direta</span>
-            </div>
-            <div class="card-num">Pesquisa: ${valorInput}</div>
-            <div class="card-detail">Consulta Externa no Portal Oficial do Tribunal</div>
-            <div class="card-mov">📌 <b>Aviso:</b> Nenhum registro direto na API pública do CNJ ou busca requer validação pública no PJe. Clique abaixo para buscar no portal do tribunal.</div>
-            <div class="card-actions">
-              <button class="btn-action btn-copy" onclick="copiarNumero('${valorInput}', this)">📋 Copiar Termo</button>
-              <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 Buscar no PJe</a>
-            </div>
-          </div>
-        `;
+        renderizarMensagemOuFallback(valorInput);
       }
     } catch (err) {
       indicadorCarregamento.style.display = 'none';
-      areaResultados.innerHTML = `
-        <h2>Resultados</h2>
-        <p style="font-size: 0.85rem; color: #00f0ff; text-align: center; padding: 12px; background: rgba(0,240,255,0.05); border-radius: 10px;">
-          ⚡ O servidor Render está a inicializar o serviço gratuito. Por favor, aguarde 15 segundos e clique em <b>Pesquisar Processos</b> novamente.
-        </p>
-      `;
+      renderizarMensagemOuFallback(valorInput);
     }
+  }
+
+  function renderizarMensagemOuFallback(valorInput) {
+    const areaResultados = document.getElementById('resultsArea');
+    areaResultados.innerHTML = `
+      <h2>Resultados da Busca</h2>
+      <div class="card">
+        <div class="card-top">
+          <span class="badge-tj">TJBA / PJe</span>
+          <span class="badge-info">Consulta Direta</span>
+        </div>
+        <div class="card-num">Termo: ${valorInput}</div>
+        <div class="card-detail">Aviso do Sistema DataJud</div>
+        <div class="card-mov">📌 A API pública do CNJ restringe o retorno direto por CPF/Nome de terceiros devido à LGPD. Utilize os botões abaixo para buscar diretamente nos portais oficiais com 1 toque:</div>
+        <div class="card-actions">
+          <button class="btn-action btn-copy" onclick="copiarNumero('${valorInput}', this)">📋 Copiar Termo</button>
+          <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 PJe TJBA</a>
+          <a href="https://www.jusbrasil.com.br/busca?q=${encodeURIComponent(valorInput)}" target="_blank" class="btn-action btn-access">🔗 Jusbrasil</a>
+        </div>
+      </div>
+    `;
   }
 </script>
 
