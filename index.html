@@ -104,24 +104,15 @@
       <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" class="input-std">
     </div>
 
-    <div class="form-group">
-      <label>Abrangência da Consulta</label>
-      <select id="selectAmbito" class="select-std">
-        <option value="TODOS">🌐 Todos os Tribunais (Estadual TJBA + Federal TRF)</option>
-        <option value="ESTADUAL">🏛️ Justiça Estadual (TJBA / PJe)</option>
-        <option value="FEDERAL">⚖️ Justiça Federal (TRF1 / PJe)</option>
-      </select>
-    </div>
-
     <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">🔎 Executar Pesquisa Unificada</button>
-    <div class="loading" id="loadingMsg">⏳ Consultando base do DataJud/CNJ...</div>
+    <div class="loading" id="loadingMsg">⏳ Conectando à base do CNJ...</div>
 
     <div id="areaResultadosBusca" style="margin-top: 14px;"></div>
   </div>
 
   <!-- SEÇÃO 2: MINHA CENTRAL -->
   <div id="secCentral" class="section-page">
-    <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar / Importar Processo Manualmente</button>
+    <button class="btn-add-main" onclick="abrirModal()">➕ Arquivar Novo Processo na Central</button>
 
     <div class="search-box">
       <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar central por nº, assunto, etiqueta ou vara...">
@@ -146,7 +137,7 @@
   <div id="secBackup" class="section-page">
     <div class="backup-box">
       <div class="backup-title">📦 Exportar Ficheiro de Backup</div>
-      <div class="backup-desc">Guarde a sua lista inteira de processos num ficheiro seguro (.json) para guardar no telemóvel ou passar para outro aparelho.</div>
+      <div class="backup-desc">Guarde a sua lista inteira de processos num ficheiro seguro (.json) no seu telemóvel.</div>
       <button class="btn-backup" style="background: #1e50ff; color: #fff;" onclick="exportarBackupJSON()">💾 Descarregar Backup (.json)</button>
     </div>
 
@@ -188,10 +179,10 @@
 <!-- MODAL PARA ADICIONAR / EDITAR PROCESSO NA CENTRAL -->
 <div class="modal" id="modalForm">
   <div class="modal-content">
-    <div class="modal-title">Arquivar / Cadastrar Processo</div>
+    <div class="modal-title">Arquivar Processo na Central</div>
     
     <div class="form-group">
-      <label>Número do Processo (Máscara CNJ Automática)</label>
+      <label>Número do Processo (20 dígitos)</label>
       <input type="text" id="formNum" placeholder="0000000-00.0000.0.00.0000" oninput="aplicarMascaraCNJ(this)">
     </div>
 
@@ -235,7 +226,7 @@
 
     <div class="modal-btns">
       <button class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-modal btn-save" onclick="salvarNovoProcesso()">📥 Arquivar na Central</button>
+      <button class="btn-modal btn-save" onclick="salvarNovoProcesso()">📥 Guardar na Central</button>
     </div>
   </div>
 </div>
@@ -404,4 +395,16 @@
     filtrados.forEach(p => {
       const isAtivo = p.situacao === 'ATIVO';
       const badgeClass = isAtivo ? 'badge-ativo' : 'badge-inativo';
-      const statusTexto = isAtivo ? 2
+      const statusTexto = isAtivo ? '🟢 ATIVO' : '🔴 INATIVO';
+      const infoPrazo = calcularPrazoStatus(p.dataPrazo);
+
+      html += `
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <span class="badge badge-tj">${p.tribunal || 'TJBA'}</span>
+              ${p.tag ? `<span class="badge badge-tag">${p.tag}</span>` : ''}
+            </div>
+            <span class="badge ${badgeClass}">${statusTexto}</span>
+          </div>
+          <div class="card
