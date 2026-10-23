@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>JusSmart - Gestão e Consulta Processual</title>
+  <title>JusSmart Pro - Gestão e Consulta Processual</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
@@ -448,7 +448,6 @@
       return;
     }
 
-    // Ordena por data
     comPrazo.sort((a, b) => new Date(a.dataPrazo) - new Date(b.dataPrazo));
 
     let html = '';
@@ -608,19 +607,36 @@
   function renderizarCardAtalhoPJe(valor) {
     const area = document.getElementById('areaResultadosBusca');
     const encoded = encodeURIComponent(valor);
+    const urlPJe = `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam`;
+
+    // Copia o termo digitado automaticamente para a área de transferência
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(valor);
+    }
+
     area.innerHTML = `
       <div class="card">
         <div class="card-top">
           <span class="badge badge-tj">TJBA / PJe</span>
-          <span class="badge badge-inativo">CONSULTA DIRETA</span>
+          <span class="badge badge-ativo">Consulta Gratuita R$ 0,00</span>
         </div>
-        <div class="card-num">Pesquisa: ${valor}</div>
-        <div class="card-detail">Acesso Direto ao Portal do Tribunal</div>
-        <div class="card-mov">📌 A API pública do CNJ restringe retornos diretos por CPF/Nome devido à LGPD. Utilize os botões abaixo para consultar no PJe ou Jusbrasil em 1 toque:</div>
-        <div class="card-actions">
-          <button class="btn-action btn-copy" onclick="copiarNumero('${valor}', this)">📋 Copiar Termo</button>
-          <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 PJe TJBA</a>
-          <a href="https://www.jusbrasil.com.br/busca?q=${encoded}" target="_blank" class="btn-action btn-access">🔗 Jusbrasil</a>
+        <div class="card-title">Consulta por CPF / Nome / Terceiros</div>
+        <div class="card-num">Termo: ${valor}</div>
+        <div class="card-detail">Portal Oficial do Tribunal de Justiça</div>
+        <div class="card-mov">
+          📌 <b>Termo copiado automaticamente!</b><br>
+          A API pública do CNJ omite listagens diretas por CPF/Nome (LGPD). Para consultar gratuitamente no portal oficial, clique nos botões abaixo para colar e visualizar os processos:
+        </div>
+        <div class="card-actions" style="flex-direction: column; gap: 8px;">
+          <button class="btn-action btn-copy" style="width: 100%; padding: 11px;" onclick="copiarNumero('${valor}', this)">
+            📋 1. Termo Copiado (${valor})
+          </button>
+          <a href="${urlPJe}" target="_blank" class="btn-action btn-access" style="width: 100%; padding: 11px; background: #1e50ff; color: #fff;">
+            🔗 2. Abrir PJe TJBA para Colar
+          </a>
+          <a href="https://www.jusbrasil.com.br/busca?q=${encoded}" target="_blank" class="btn-action btn-access" style="width: 100%; padding: 11px; background: rgba(0, 240, 255, 0.15); border: 1px solid #00f0ff; color: #00f0ff;">
+            🔍 3. Consultar no Jusbrasil
+          </a>
         </div>
       </div>
     `;
