@@ -105,14 +105,14 @@
     </div>
 
     <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">🔎 Executar Pesquisa Unificada</button>
-    <div class="loading" id="loadingMsg">⏳ Conectando à base do CNJ...</div>
+    <div class="loading" id="loadingMsg">⏳ Consultando a base unificada...</div>
 
     <div id="areaResultadosBusca" style="margin-top: 14px;"></div>
   </div>
 
   <!-- SEÇÃO 2: MINHA CENTRAL -->
   <div id="secCentral" class="section-page">
-    <button class="btn-add-main" onclick="abrirModal()">➕ Arquivar Novo Processo na Central</button>
+    <button class="btn-add-main" onclick="abrirModal()">➕ Arquivar Processo na Central</button>
 
     <div class="search-box">
       <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar central por nº, assunto, etiqueta ou vara...">
@@ -407,4 +407,4 @@
             </div>
             <span class="badge ${badgeClass}">${statusTexto}</span>
           </div>
-          <div class="card
+          <div class="card-
