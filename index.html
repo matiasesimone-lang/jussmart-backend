@@ -2,80 +2,413 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>JusSmart Pro - Gestão e Consulta Processual</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JusSmart - Central e Buscador</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; padding: 12px 12px 80px 12px; min-height: 100vh; display: flex; justify-content: center; }
-    .app-card { width: 100%; max-width: 480px; background: #1e293b; border-radius: 20px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
+    body { background: #0f172a; color: #f8fafc; padding: 16px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+    .app-card { width: 100%; max-width: 450px; background: #1e293b; border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; margin-top: 10px; }
     
-    /* Header */
-    .header { text-align: center; margin-bottom: 14px; }
-    .logo-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 6px 14px; border-radius: 16px; font-weight: bold; font-size: 0.88rem; color: #fff; margin-bottom: 4px; }
-    .header h1 { font-size: 1.3rem; color: #fff; }
-    .header p { font-size: 0.75rem; color: #94a3b8; }
+    .header { text-align: center; margin-bottom: 16px; }
+    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 6px; }
+    .header h1 { font-size: 1.4rem; color: #fff; }
+    .header p { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
 
-    /* Barra de Navegação Inferior */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 8px 0; z-index: 900; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; color: #64748b; font-size: 0.68rem; font-weight: 600; cursor: pointer; flex: 1; gap: 3px; }
-    .nav-item span.icon { font-size: 1.2rem; }
-    .nav-item.active { color: #00f0ff; }
+    /* Modos Principais */
+    .mode-switcher { display: flex; gap: 6px; background: #0f172a; padding: 4px; border-radius: 14px; margin-bottom: 18px; border: 1px solid #334155; }
+    .mode-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-size: 0.82rem; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .mode-btn.active { background: linear-gradient(135deg, #1e50ff, #00f0ff); color: #fff; }
 
-    /* Seções */
-    .section-page { display: none; }
-    .section-page.active { display: block; }
+    /* Elementos da Minha Central */
+    .search-box { margin-bottom: 12px; }
+    .search-box input { width: 100%; padding: 11px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: #fff; font-size: 0.88rem; outline: none; }
 
-    /* Componentes Genéricos */
-    .search-box { margin-bottom: 10px; }
-    .search-box input, .input-std { width: 100%; padding: 11px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; }
-    
-    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 3px; border-radius: 10px; margin-bottom: 12px; overflow-x: auto; }
-    .tab-btn { flex: 1; padding: 7px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.72rem; font-weight: 600; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: #334155; color: #fff; }
 
-    .btn-add-main { width: 100%; padding: 11px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .actions-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+    .btn-add-main { flex: 2; padding: 12px; background: #10b981; border: none; border-radius: 12px; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-reset-main { flex: 1; padding: 12px; background: #334155; border: 1px solid #475569; border-radius: 12px; color: #cbd5e1; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
-    /* Cartão de Processo */
-    .card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
-    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
-    .badge { padding: 3px 7px; border-radius: 5px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; }
-    .badge-tj { background: #1e50ff; color: #fff; }
-    .badge-ativo { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
-    .badge-inativo { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
-    .badge-tag { background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.3); }
-
-    .card-title { font-size: 0.9rem; font-weight: bold; color: #f8fafc; margin-bottom: 3px; }
-    .card-num { font-size: 0.82rem; font-weight: 600; color: #00f0ff; margin-bottom: 5px; word-break: break-all; }
-    .card-detail { font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; }
-    .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 7px 9px; border-radius: 6px; font-size: 0.73rem; color: #cbd5e1; margin-bottom: 8px; line-height: 1.3; }
+    /* Cartões */
+    .card { background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .badge-tj { background: #1e50ff; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
+    .badge-ativo { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; }
+    .badge-inativo { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: bold; }
     
-    /* Alerta de Prazo no Cartão */
-    .prazo-alert { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; margin-bottom: 8px; width: 100%; }
-    .prazo-hoje { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
-    .prazo-alerta { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
-    .prazo-ok { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
+    .card-title { font-size: 0.92rem; font-weight: bold; color: #f8fafc; margin-bottom: 4px; }
+    .card-num { font-size: 0.85rem; font-weight: 600; color: #00f0ff; margin-bottom: 6px; word-break: break-all; }
+    .card-detail { font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px; }
+    .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 8px 10px; border-radius: 8px; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 12px; line-height: 1.4; }
 
-    /* Ações do Cartão */
-    .card-actions { display: flex; gap: 5px; flex-wrap: wrap; }
-    .btn-action { flex: 1; min-width: 80px; text-align: center; padding: 8px 4px; font-size: 0.7rem; font-weight: bold; border-radius: 7px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+    .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-action { flex: 1; min-width: 95px; text-align: center; padding: 9px; font-size: 0.72rem; font-weight: bold; border-radius: 8px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .btn-copy { background: #334155; color: #f8fafc; }
     .btn-access { background: rgba(30, 80, 255, 0.3); border: 1px solid #1e50ff; color: #00f0ff; }
-    .btn-wsp { background: rgba(37, 211, 102, 0.2); border: 1px solid #25d366; color: #25d366; }
-    .btn-delete { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; width: 32px; flex: none; }
+    .btn-delete { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; width: 36px; flex: none; }
 
     /* Modal Form */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 16px; z-index: 999; }
-    .modal-content { background: #1e293b; width: 100%; max-width: 420px; border-radius: 18px; padding: 18px; border: 1px solid #334155; max-height: 90vh; overflow-y: auto; }
-    .modal-title { font-size: 1rem; font-weight: bold; color: #fff; margin-bottom: 12px; text-align: center; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 0.72rem; color: #94a3b8; margin-bottom: 3px; }
-    .form-group input, .form-group select { width: 100%; padding: 9px; background: #0f172a; border: 1px solid #334155; border-radius: 7px; color: #fff; font-size: 0.82rem; outline: none; }
-    .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
-    .btn-modal { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.82rem; }
+    .modal-content { background: #1e293b; width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
+    .modal-title { font-size: 1.05rem; font-weight: bold; color: #fff; margin-bottom: 14px; text-align: center; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+    .btn-modal { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 0.85rem; }
     .btn-save { background: #10b981; color: #fff; }
     .btn-cancel { background: #334155; color: #94a3b8; }
 
-    .backup-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px
-                 
+    .loading { text-align: center; color: #00f0ff; font-size: 0.85rem; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="app-card">
+  <div class="header">
+    <div class="logo-badge">⚖️ JusSmart</div>
+    <h1>Plataforma Processual</h1>
+    <p>Gestão de Processos e Consulta Externa</p>
+  </div>
+
+  <!-- Alternador do Modo Principal -->
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btnModoCentral" onclick="trocarModoPrincipal('central')">📋 Minha Central</button>
+    <button class="mode-btn" id="btnModoBusca" onclick="trocarModoPrincipal('busca')">🔍 Busca Externa</button>
+  </div>
+
+  <!-- SECÇÃO 1: MINHA CENTRAL -->
+  <div id="secCentral">
+    <div class="actions-bar">
+      <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Processo</button>
+      <button class="btn-reset-main" onclick="reporProcessosPadrao()">↺ Repor Dados</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar lista por nº, assunto ou vara...">
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tabTodos" onclick="filtrarAbaLocal('TODOS')">Todos (<span id="cntTodos">0</span>)</button>
+      <button class="tab-btn" id="tabAtivos" onclick="filtrarAbaLocal('ATIVO')">🟢 Ativos (<span id="cntAtivos">0</span>)</button>
+      <button class="tab-btn" id="tabInativos" onclick="filtrarAbaLocal('INATIVO')">🔴 Inativos (<span id="cntInativos">0</span>)</button>
+    </div>
+
+    <div id="listaProcessosLocais"></div>
+  </div>
+
+  <!-- SECÇÃO 2: BUSCA EXTERNA -->
+  <div id="secBusca" style="display: none;">
+    <div class="tabs">
+      <button class="tab-btn active" id="btnTipoCpf" onclick="alterarTipoBusca('cpf')">CPF / CNPJ</button>
+      <button class="tab-btn" id="btnTipoNum" onclick="alterarTipoBusca('numero')">Nº Processo</button>
+      <button class="tab-btn" id="btnTipoNome" onclick="alterarTipoBusca('nome')">Nome</button>
+    </div>
+
+    <div class="form-group">
+      <label id="labelTipoBusca">Digite o CPF ou CNPJ para pesquisar</label>
+      <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" style="width:100%; padding:12px; background:#0f172a; border:1px solid #334155; border-radius:10px; color:#fff;">
+    </div>
+
+    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff); width: 100%;" onclick="executarBuscaExterna()">Pesquisar nos Tribunais</button>
+    <div class="loading" id="loadingMsg">⏳ Consultando a base do DataJud/CNJ...</div>
+
+    <div id="areaResultadosBusca" style="margin-top: 16px;"></div>
+  </div>
+</div>
+
+<!-- Modal para Adicionar Processo -->
+<div class="modal" id="modalForm">
+  <div class="modal-content">
+    <div class="modal-title">Novo Processo para Acompanhamento</div>
+    
+    <div class="form-group">
+      <label>Número do Processo (20 dígitos)</label>
+      <input type="text" id="formNum" placeholder="Ex: 8004080-34.2022.8.05.0146">
+    </div>
+
+    <div class="form-group">
+      <label>Assunto / Título</label>
+      <input type="text" id="formAssunto" placeholder="Ex: Ação de Cobrança / Alimentos">
+    </div>
+
+    <div class="form-group">
+      <label>Tribunal / Órgão Julgador</label>
+      <input type="text" id="formOrgao" placeholder="Ex: 1ª Vara Cível - Juazeiro (TJBA)">
+    </div>
+
+    <div class="form-group">
+      <label>Situação do Processo</label>
+      <select id="formSituacao">
+        <option value="ATIVO">🟢 ATIVO (Em andamento)</option>
+        <option value="INATIVO">🔴 INATIVO (Arquivado/Finalizado)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Última Movimentação / Anotação</label>
+      <input type="text" id="formMov" placeholder="Ex: Aguardando audiência / Despacho">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-modal btn-save" onclick="salvarNovoProcesso()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let modoPrincipal = 'central';
+  let tipoBuscaExterna = 'cpf';
+  let filtroAbaLocalAtual = 'TODOS';
+  const URL_BACKEND = 'https://jussmart-backend.onrender.com/api/buscar';
+
+  const baseInicial = [
+    {
+      id: 1,
+      numero: "8004080-34.2022.8.05.0146",
+      tribunal: "TJBA",
+      situacao: "ATIVO",
+      assunto: "Exoneração de Alimentos",
+      orgaoJulgador: "Vara de Família - Comarca de Juazeiro",
+      ultimaMovimentacao: "Concluso para despacho/decisão do Juiz.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      id: 2,
+      numero: "8003476-44.2020.8.05.0146",
+      tribunal: "TJBA",
+      situacao: "ATIVO",
+      assunto: "Procedimento Comum / FUNPREV",
+      orgaoJulgador: "1ª Vara Fazenda Pública - Juazeiro",
+      ultimaMovimentacao: "Juntada de petição de manifestação da parte autora.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      id: 3,
+      numero: "0003373-96.2008.8.05.0146",
+      tribunal: "TJBA",
+      situacao: "INATIVO",
+      assunto: "Execução Contra a Fazenda Pública",
+      orgaoJulgador: "Vara da Fazenda Pública - Juazeiro",
+      ultimaMovimentacao: "Processo arquivado/finalizado - Precatório expedido.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    },
+    {
+      id: 4,
+      numero: "0063666-74.2011.8.05.0001",
+      tribunal: "TJBA",
+      situacao: "INATIVO",
+      assunto: "Ordinária / Gratificações PM",
+      orgaoJulgador: "6ª Vara da Fazenda Pública - Salvador",
+      ultimaMovimentacao: "Processo findo - Aguardando ordem de pagamento.",
+      link: "https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam"
+    }
+  ];
+
+  function trocarModoPrincipal(modo) {
+    modoPrincipal = modo;
+    if (modo === 'central') {
+      document.getElementById('btnModoCentral').classList.add('active');
+      document.getElementById('btnModoBusca').classList.remove('active');
+      document.getElementById('secCentral').style.display = 'block';
+      document.getElementById('secBusca').style.display = 'none';
+    } else {
+      document.getElementById('btnModoBusca').classList.add('active');
+      document.getElementById('btnModoCentral').classList.remove('active');
+      document.getElementById('secBusca').style.display = 'block';
+      document.getElementById('secCentral').style.display = 'none';
+    }
+  }
+
+  function obterProcessosLocais() {
+    const dados = localStorage.getItem('jussmart_carteira');
+    if (!dados || JSON.parse(dados).length === 0) {
+      localStorage.setItem('jussmart_carteira', JSON.stringify(baseInicial));
+      return baseInicial;
+    }
+    return JSON.parse(dados);
+  }
+
+  function reporProcessosPadrao() {
+    localStorage.setItem('jussmart_carteira', JSON.stringify(baseInicial));
+    renderizarCentralLocal();
+    alert('Dados da Central repostos com sucesso!');
+  }
+
+  function guardarProcessosLocais(lista) {
+    localStorage.setItem('jussmart_carteira', JSON.stringify(lista));
+    renderizarCentralLocal();
+  }
+
+  function renderizarCentralLocal() {
+    const lista = obterProcessosLocais();
+    const inputEl = document.getElementById('filterInput');
+    const termo = inputEl ? inputEl.value.toLowerCase() : '';
+    const container = document.getElementById('listaProcessosLocais');
+
+    if (!container) return;
+
+    document.getElementById('cntTodos').innerText = lista.length;
+    document.getElementById('cntAtivos').innerText = lista.filter(p => p.situacao === 'ATIVO').length;
+    document.getElementById('cntInativos').innerText = lista.filter(p => p.situacao === 'INATIVO').length;
+
+    let filtrados = lista.filter(p => {
+      const okAba = (filtroAbaLocalAtual === 'TODOS') || (p.situacao === filtroAbaLocalAtual);
+      const okTexto = p.numero.toLowerCase().includes(termo) ||
+                      p.assunto.toLowerCase().includes(termo) ||
+                      p.orgaoJulgador.toLowerCase().includes(termo);
+      return okAba && okTexto;
+    });
+
+    if (filtrados.length === 0) {
+      container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.85rem; padding: 20px;">Nenhum processo nesta vista.</p>`;
+      return;
+    }
+
+    let html = '';
+    filtrados.forEach(p => {
+      const isAtivo = p.situacao === 'ATIVO';
+      const badgeClass = isAtivo ? 'badge-ativo' : 'badge-inativo';
+      const statusTexto = isAtivo ? '🟢 ATIVO' : '🔴 INATIVO';
+
+      html += `
+        <div class="card">
+          <div class="card-top">
+            <span class="badge-tj">${p.tribunal || 'TJBA'}</span>
+            <span class="${badgeClass}">${statusTexto}</span>
+          </div>
+          <div class="card-title">${p.assunto}</div>
+          <div class="card-num">Nº: ${p.numero}</div>
+          <div class="card-detail">${p.orgaoJulgador}</div>
+          <div class="card-mov">📌 <b>Andamento:</b> ${p.ultimaMovimentacao}</div>
+          <div class="card-actions">
+            <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
+            <a href="${p.link || 'https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam'}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+            <button class="btn-action btn-delete" onclick="removerProcesso(${p.id})">🗑️</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function filtrarAbaLocal(aba) {
+    filtroAbaLocalAtual = aba;
+    document.querySelectorAll('#secCentral .tab-btn').forEach(b => b.classList.remove('active'));
+    if (aba === 'TODOS') document.getElementById('tabTodos').classList.add('active');
+    if (aba === 'ATIVO') document.getElementById('tabAtivos').classList.add('active');
+    if (aba === 'INATIVO') document.getElementById('tabInativos').classList.add('active');
+    renderizarCentralLocal();
+  }
+
+  function filtrarListaLocal() {
+    renderizarCentralLocal();
+  }
+
+  function alterarTipoBusca(tipo) {
+    tipoBuscaExterna = tipo;
+    document.querySelectorAll('#secBusca .tab-btn').forEach(b => b.classList.remove('active'));
+    const label = document.getElementById('labelTipoBusca');
+    const input = document.getElementById('inputBuscaExterna');
+
+    if (tipo === 'cpf') {
+      document.getElementById('btnTipoCpf').classList.add('active');
+      label.innerText = 'Digite o CPF ou CNPJ para pesquisar';
+      input.placeholder = 'Ex: 000.000.000-00';
+    } else if (tipo === 'numero') {
+      document.getElementById('btnTipoNum').classList.add('active');
+      label.innerText = 'Digite o Número Unificado do Processo';
+      input.placeholder = 'Ex: 8004080-34.2022.8.05.0146';
+    } else {
+      document.getElementById('btnTipoNome').classList.add('active');
+      label.innerText = 'Digite o Nome Completo';
+      input.placeholder = 'Ex: Maria das Dores Silva';
+    }
+  }
+
+  async function executarBuscaExterna() {
+    const valor = document.getElementById('inputBuscaExterna').value.trim();
+    const area = document.getElementById('areaResultadosBusca');
+    const loading = document.getElementById('loadingMsg');
+
+    if (!valor) {
+      alert('Por favor, digite um valor para pesquisar.');
+      return;
+    }
+
+    loading.style.display = 'block';
+    area.innerHTML = '';
+
+    try {
+      const resp = await fetch(URL_BACKEND, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: tipoBuscaExterna, valor: valor })
+      });
+
+      const dados = await resp.json();
+      loading.style.display = 'none';
+
+      if (dados.sucesso && dados.processos && dados.processos.length > 0) {
+        let html = `<h2 style="font-size:0.85rem; color:#94a3b8; margin-bottom:10px;">RESULTADOS ENCONTRADOS (${dados.processos.length})</h2>`;
+        dados.processos.forEach(p => {
+          html += `
+            <div class="card">
+              <div class="card-top">
+                <span class="badge-tj">${p.tribunal}</span>
+                <span class="badge-ativo">DataJud CNJ</span>
+              </div>
+              <div class="card-title">${p.classe || 'Procedimento Judicial'}</div>
+              <div class="card-num">Nº: ${p.numero}</div>
+              <div class="card-detail">${p.orgaoJulgador}</div>
+              <div class="card-mov">📌 <b>Data de Ajuizamento:</b> ${p.dataAjuizamento || 'Não informada'}</div>
+              <div class="card-actions">
+                <button class="btn-action btn-copy" onclick="copiarNumero('${p.numero}', this)">📋 Copiar Nº</button>
+                <a href="${p.linkConsulta}" target="_blank" class="btn-action btn-access">🔗 Abrir PJe</a>
+              </div>
+            </div>
+          `;
+        });
+        area.innerHTML = html;
+      } else {
+        renderizarCardAtalhoPJe(valor);
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      renderizarCardAtalhoPJe(valor);
+    }
+  }
+
+  function renderizarCardAtalhoPJe(valor) {
+    const area = document.getElementById('areaResultadosBusca');
+    const encoded = encodeURIComponent(valor);
+    area.innerHTML = `
+      <div class="card">
+        <div class="card-top">
+          <span class="badge-tj">TJBA / PJe</span>
+          <span class="badge-inativo">CONSULTA DIRETA</span>
+        </div>
+        <div class="card-num">Pesquisa: ${valor}</div>
+        <div class="card-detail">Acesso Direto ao Portal do Tribunal</div>
+        <div class="card-mov">📌 A API pública do CNJ restringe retornos diretos por CPF/Nome devido à LGPD. Utilize os botões abaixo para consultar no PJe ou Jusbrasil em 1 toque:</div>
+        <div class="card-actions">
+          <button class="btn-action btn-copy" onclick="copiarNumero('${valor}', this)">📋 Copiar Termo</button>
+          <a href="https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam" target="_blank" class="btn-action btn-access">🔗 PJe TJBA</a>
+          <a href="https://www.jusbrasil.com.br/busca?q=${encoded}" target="_blank" class="btn-action btn-access">🔗 Jusbrasil</a>
+        </div>
+      </div>
+    `;
+  }
+
+  function copiarNumero(num, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(num);
+    } else {
+      const temp = document.createElement('input');
+      temp.val
