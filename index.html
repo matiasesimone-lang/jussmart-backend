@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>JusSmart Pro - Busca e Central de Processos</title>
+  <title>JusSmart Pro - Gestão e Consulta Processual</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e50ff">
   <style>
@@ -11,31 +11,33 @@
     body { background: #0f172a; color: #f8fafc; padding: 12px 12px 80px 12px; min-height: 100vh; display: flex; justify-content: center; }
     .app-card { width: 100%; max-width: 480px; background: #1e293b; border-radius: 20px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
     
+    /* Header */
     .header { text-align: center; margin-bottom: 14px; }
     .logo-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #1e50ff, #00f0ff); padding: 6px 14px; border-radius: 16px; font-weight: bold; font-size: 0.88rem; color: #fff; margin-bottom: 4px; }
     .header h1 { font-size: 1.3rem; color: #fff; }
     .header p { font-size: 0.75rem; color: #94a3b8; }
 
-    /* Bottom Navigation */
+    /* Barra de Navegação Inferior */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0f172a; border-top: 1px solid #334155; display: flex; justify-content: space-around; padding: 8px 0; z-index: 900; }
     .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; color: #64748b; font-size: 0.68rem; font-weight: 600; cursor: pointer; flex: 1; gap: 3px; }
     .nav-item span.icon { font-size: 1.2rem; }
     .nav-item.active { color: #00f0ff; }
 
-    /* Sections */
+    /* Seções */
     .section-page { display: none; }
     .section-page.active { display: block; }
 
+    /* Componentes Genéricos */
     .search-box { margin-bottom: 10px; }
-    .search-box input, .input-std, .select-std { width: 100%; padding: 11px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; }
+    .search-box input, .input-std { width: 100%; padding: 11px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #fff; font-size: 0.85rem; outline: none; }
     
-    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 3px; border-radius: 10px; margin-bottom: 12px; }
+    .tabs { display: flex; gap: 4px; background: #0f172a; padding: 3px; border-radius: 10px; margin-bottom: 12px; overflow-x: auto; }
     .tab-btn { flex: 1; padding: 7px 4px; border: none; background: transparent; color: #94a3b8; font-size: 0.72rem; font-weight: 600; border-radius: 7px; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: #334155; color: #fff; }
 
     .btn-add-main { width: 100%; padding: 11px; background: #10b981; border: none; border-radius: 10px; color: #fff; font-weight: bold; font-size: 0.85rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-    /* Cards */
+    /* Cartão de Processo */
     .card { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
     .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px; }
     .badge { padding: 3px 7px; border-radius: 5px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; }
@@ -49,16 +51,17 @@
     .card-detail { font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; }
     .card-mov { background: #1e293b; border-left: 3px solid #00f0ff; padding: 7px 9px; border-radius: 6px; font-size: 0.73rem; color: #cbd5e1; margin-bottom: 8px; line-height: 1.3; }
     
+    /* Alerta de Prazo no Cartão */
     .prazo-alert { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; margin-bottom: 8px; width: 100%; }
     .prazo-hoje { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
     .prazo-alerta { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
     .prazo-ok { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
 
+    /* Ações do Cartão */
     .card-actions { display: flex; gap: 5px; flex-wrap: wrap; }
     .btn-action { flex: 1; min-width: 80px; text-align: center; padding: 8px 4px; font-size: 0.7rem; font-weight: bold; border-radius: 7px; text-decoration: none; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
     .btn-copy { background: #334155; color: #f8fafc; }
     .btn-access { background: rgba(30, 80, 255, 0.3); border: 1px solid #1e50ff; color: #00f0ff; }
-    .btn-save-central { background: #10b981; color: #fff; }
     .btn-wsp { background: rgba(37, 211, 102, 0.2); border: 1px solid #25d366; color: #25d366; }
     .btn-delete { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; width: 32px; flex: none; }
 
@@ -88,34 +91,15 @@
   <div class="header">
     <div class="logo-badge">⚖️ JusSmart Pro</div>
     <h1>Plataforma Processual</h1>
-    <p>Busca Unificada e Arquivamento Central</p>
+    <p>Acompanhamento, Prazos e Consultas</p>
   </div>
 
-  <!-- SEÇÃO 1: BUSCA UNIFICADA (Aba Principal) -->
-  <div id="secBusca" class="section-page active">
-    <div class="tabs">
-      <button class="tab-btn active" id="btnTipoCpf" onclick="alterarTipoBusca('cpf')">CPF / CNPJ</button>
-      <button class="tab-btn" id="btnTipoNum" onclick="alterarTipoBusca('numero')">Nº Processo</button>
-      <button class="tab-btn" id="btnTipoNome" onclick="alterarTipoBusca('nome')">Nome</button>
-    </div>
-
-    <div class="form-group">
-      <label id="labelTipoBusca">Digite o CPF ou CNPJ para pesquisar</label>
-      <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" class="input-std">
-    </div>
-
-    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">🔎 Executar Pesquisa Unificada</button>
-    <div class="loading" id="loadingMsg">⏳ Consultando a base unificada...</div>
-
-    <div id="areaResultadosBusca" style="margin-top: 14px;"></div>
-  </div>
-
-  <!-- SEÇÃO 2: MINHA CENTRAL -->
-  <div id="secCentral" class="section-page">
-    <button class="btn-add-main" onclick="abrirModal()">➕ Arquivar Processo na Central</button>
+  <!-- SEÇÃO 1: MINHA CENTRAL -->
+  <div id="secCentral" class="section-page active">
+    <button class="btn-add-main" onclick="abrirModal()">➕ Cadastrar Novo Processo</button>
 
     <div class="search-box">
-      <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar central por nº, assunto, etiqueta ou vara...">
+      <input type="text" id="filterInput" onkeyup="filtrarListaLocal()" placeholder="🔍 Filtrar por nº, assunto, etiqueta ou vara...">
     </div>
 
     <div class="tabs">
@@ -127,17 +111,35 @@
     <div id="listaProcessosLocais"></div>
   </div>
 
-  <!-- SEÇÃO 3: PRAZOS & AGENDA -->
+  <!-- SEÇÃO 2: PRAZOS & AGENDA -->
   <div id="secPrazos" class="section-page">
-    <h2 style="font-size: 0.9rem; color: #00f0ff; margin-bottom: 10px;">📅 Prazos Vencidos e Próximos Compromissos</h2>
+    <h2 style="font-size: 0.9rem; color: #00f0ff; margin-bottom: 10px;">📅 Próximos Prazos e Audiências</h2>
     <div id="listaPrazosAgenda"></div>
+  </div>
+
+  <!-- SEÇÃO 3: BUSCA EXTERNA -->
+  <div id="secBusca" class="section-page">
+    <div class="tabs">
+      <button class="tab-btn active" id="btnTipoCpf" onclick="alterarTipoBusca('cpf')">CPF / CNPJ</button>
+      <button class="tab-btn" id="btnTipoNum" onclick="alterarTipoBusca('numero')">Nº Processo</button>
+      <button class="tab-btn" id="btnTipoNome" onclick="alterarTipoBusca('nome')">Nome</button>
+    </div>
+
+    <div class="form-group">
+      <label id="labelTipoBusca">Digite o CPF ou CNPJ para pesquisar</label>
+      <input type="text" id="inputBuscaExterna" placeholder="Ex: 000.000.000-00" class="input-std">
+    </div>
+
+    <button class="btn-add-main" style="background: linear-gradient(135deg, #1e50ff, #00f0ff);" onclick="executarBuscaExterna()">Pesquisar nos Tribunais</button>
+
+    <div id="areaResultadosBusca" style="margin-top: 14px;"></div>
   </div>
 
   <!-- SEÇÃO 4: DEFINIÇÕES & BACKUP -->
   <div id="secBackup" class="section-page">
     <div class="backup-box">
       <div class="backup-title">📦 Exportar Ficheiro de Backup</div>
-      <div class="backup-desc">Guarde a sua lista inteira de processos num ficheiro seguro (.json) no seu telemóvel.</div>
+      <div class="backup-desc">Guarde a sua lista inteira de processos num ficheiro seguro (.json) para guardar no telemóvel ou passar para outro aparelho.</div>
       <button class="btn-backup" style="background: #1e50ff; color: #fff;" onclick="exportarBackupJSON()">💾 Descarregar Backup (.json)</button>
     </div>
 
@@ -149,7 +151,7 @@
     </div>
 
     <div class="backup-box">
-      <div class="backup-title">↺ Repor Registos Iniciais</div>
+      <div class="backup-title">↺ Repor Dados de Exemplo</div>
       <div class="backup-desc">Repõe a lista inicial de exemplo com os processos de teste cadastrados.</div>
       <button class="btn-backup" style="background: #334155; color: #cbd5e1;" onclick="reporProcessosPadrao()">Restaurar Registos Iniciais</button>
     </div>
@@ -158,11 +160,7 @@
 
 <!-- NAVEGAÇÃO INFERIOR NATIIVA -->
 <nav class="bottom-nav">
-  <button class="nav-item active" id="navBusca" onclick="trocarSecao('busca')">
-    <span class="icon">🔍</span>
-    <span>Busca</span>
-  </button>
-  <button class="nav-item" id="navCentral" onclick="trocarSecao('central')">
+  <button class="nav-item active" id="navCentral" onclick="trocarSecao('central')">
     <span class="icon">📋</span>
     <span>Central</span>
   </button>
@@ -170,30 +168,34 @@
     <span class="icon">📅</span>
     <span>Prazos</span>
   </button>
+  <button class="nav-item" id="navBusca" onclick="trocarSecao('busca')">
+    <span class="icon">🔍</span>
+    <span>Busca</span>
+  </button>
   <button class="nav-item" id="navBackup" onclick="trocarSecao('backup')">
     <span class="icon">⚙️</span>
     <span>Opções</span>
   </button>
 </nav>
 
-<!-- MODAL PARA ADICIONAR / EDITAR PROCESSO NA CENTRAL -->
+<!-- MODAL PARA ADICIONAR / EDITAR PROCESSO -->
 <div class="modal" id="modalForm">
   <div class="modal-content">
-    <div class="modal-title">Arquivar Processo na Central</div>
+    <div class="modal-title">Novo Processo / Acompanhamento</div>
     
     <div class="form-group">
-      <label>Número do Processo (20 dígitos)</label>
+      <label>Número do Processo (Mascara Automática CNJ)</label>
       <input type="text" id="formNum" placeholder="0000000-00.0000.0.00.0000" oninput="aplicarMascaraCNJ(this)">
     </div>
 
     <div class="form-group">
-      <label>Assunto / Classe</label>
+      <label>Assunto / Título</label>
       <input type="text" id="formAssunto" placeholder="Ex: Exoneração de Alimentos / Cobrança">
     </div>
 
     <div class="form-group">
       <label>Etiqueta / Categoria</label>
-      <input type="text" id="formTag" placeholder="Ex: Família, Trabalhista, Federal, Urgente">
+      <input type="text" id="formTag" placeholder="Ex: Família, Trabalhista, Cliente João...">
     </div>
 
     <div class="form-group">
@@ -210,32 +212,31 @@
     </div>
 
     <div class="form-group">
-      <label>Data de Prazo Aberto / Audiência (Opcional)</label>
+      <label>Data de Prazo / Audiência (Opcional)</label>
       <input type="date" id="formDataPrazo">
     </div>
 
     <div class="form-group">
-      <label>Descrição do Prazo Aberto</label>
-      <input type="text" id="formDescPrazo" placeholder="Ex: Audiência de Conciliação / Contestação">
+      <label>Descrição do Prazo / Compromisso</label>
+      <input type="text" id="formDescPrazo" placeholder="Ex: Audiência de Conciliação às 14h / Réplica">
     </div>
 
     <div class="form-group">
-      <label>Última Movimentação / Resumo</label>
+      <label>Última Movimentação / Anotação</label>
       <input type="text" id="formMov" placeholder="Ex: Concluso para despacho do Juiz">
     </div>
 
     <div class="modal-btns">
       <button class="btn-modal btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-modal btn-save" onclick="salvarNovoProcesso()">📥 Guardar na Central</button>
+      <button class="btn-modal btn-save" onclick="salvarNovoProcesso()">Guardar Processo</button>
     </div>
   </div>
 </div>
 
 <script>
-  let secaoAtual = 'busca';
+  let secaoAtual = 'central';
   let tipoBuscaExterna = 'cpf';
   let filtroAbaLocalAtual = 'TODOS';
-  const URL_BACKEND = 'https://jussmart-backend.onrender.com/api/buscar';
 
   const baseInicial = [
     {
@@ -313,10 +314,7 @@
     document.querySelectorAll('.section-page').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-    if (secao === 'busca') {
-      document.getElementById('secBusca').classList.add('active');
-      document.getElementById('navBusca').classList.add('active');
-    } else if (secao === 'central') {
+    if (secao === 'central') {
       document.getElementById('secCentral').classList.add('active');
       document.getElementById('navCentral').classList.add('active');
       renderizarCentralLocal();
@@ -324,6 +322,9 @@
       document.getElementById('secPrazos').classList.add('active');
       document.getElementById('navPrazos').classList.add('active');
       renderizarAgendaPrazos();
+    } else if (secao === 'busca') {
+      document.getElementById('secBusca').classList.add('active');
+      document.getElementById('navBusca').classList.add('active');
     } else if (secao === 'backup') {
       document.getElementById('secBackup').classList.add('active');
       document.getElementById('navBackup').classList.add('active');
@@ -357,11 +358,11 @@
     if (diffDias < 0) {
       return { classe: 'prazo-hoje', texto: `🔴 Prazo Vencido (${Math.abs(diffDias)} dias atrás)` };
     } else if (diffDias === 0) {
-      return { classe: 'prazo-hoje', texto: `🔴 PRAZO ABERTO VENCE HOJE!` };
+      return { classe: 'prazo-hoje', texto: `🔴 PRAZO VENCE HOJE!` };
     } else if (diffDias <= 3) {
-      return { classe: 'prazo-alerta', texto: `⚠️ Urgente: Prazo Aberto em ${diffDias} dia(s)` };
+      return { classe: 'prazo-alerta', texto: `⚠️ Urgente: Faltam ${diffDias} dia(s)` };
     } else {
-      return { classe: 'prazo-ok', texto: `🟢 Prazo Aberto (Faltam ${diffDias} dias)` };
+      return { classe: 'prazo-ok', texto: `🟢 Faltam ${diffDias} dias` };
     }
   }
 
@@ -387,7 +388,7 @@
     });
 
     if (filtrados.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.82rem; padding: 20px;">Nenhum processo arquivado nesta vista.</p>`;
+      container.innerHTML = `<p style="text-align: center; color: #64748b; font-size: 0.82rem; padding: 20px;">Nenhum processo cadastrado nesta vista.</p>`;
       return;
     }
 
@@ -407,4 +408,6 @@
             </div>
             <span class="badge ${badgeClass}">${statusTexto}</span>
           </div>
-          <div class="card-
+          <div class="card-title">${p.assunto}</div>
+          <div class="card-num">Nº: ${p.numero}</div>
+          <div class="card-detail">${p.
