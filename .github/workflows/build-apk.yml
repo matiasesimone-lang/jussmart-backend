@@ -10,9 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Baixar codigo do repositorio
+      - name: Baixar repositorio
         uses: actions/checkout@v3
 
       - name: Configurar Java
@@ -26,18 +25,17 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Criar estrutura do projeto Flutter
+      - name: Gerar Projeto e Compilar APK
         run: |
-          mkdir -p temp_app
-          cd temp_app
-          flutter create . --org com.jussmart.app --app-name jussmart
-          cp -f ../lib/main.dart ./lib/main.dart || true
-          cp -f ../pubspec.yaml ./pubspec.yaml || true
+          flutter create app_jussmart --org com.jussmart.app
+          cd app_jussmart
+          if [ -f ../lib/main.dart ]; then cp -f ../lib/main.dart ./lib/main.dart; fi
+          if [ -f ../pubspec.yaml ]; then cp -f ../pubspec.yaml ./pubspec.yaml; fi
           flutter pub get
           flutter build apk --release
           cp build/app/outputs/flutter-apk/app-release.apk ../app-release.apk
 
-      - name: Liberar APK para Download
+      - name: Disponibilizar APK
         uses: actions/upload-artifact@v3
         with:
           name: JusSmart-App
