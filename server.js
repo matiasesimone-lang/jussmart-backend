@@ -1,100 +1,111 @@
 const express = require('express');
-const axios = require('axios');
 const cors = require('cors');
+const axios = require('axios');
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Porta que o Render usa para subir o site
 const PORT = process.env.PORT || 3000;
+const API_KEY = "c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
 
-// Chave da API do Datajud (pegamos das configurações do Render ou usamos padrão)
-const DATAJUD_API_KEY = process.env.DATAJUD_API_KEY || "c3VwZXItc2VjcmV0LWtleQ==";
-
-const BASE_URL = "https://api-publica.datajud.cnj.jus.br";
-
-// Lista COMPLETA dos 85 tribunais do Datajud
-const ENDPOINTS_TRIBUNAIS = [
-    // Tribunais Superiores
-    "api_publica_stj", "api_publica_tst", "api_publica_tse", "api_publica_stm",
-
-    // Justiça Federal
-    "api_publica_trf1", "api_publica_trf2", "api_publica_trf3", 
-    "api_publica_trf4", "api_publica_trf5", "api_publica_trf6",
-
-    // Justiça Estadual (TJs)
-    "api_publica_tjac", "api_publica_tjal", "api_publica_tjam", "api_publica_tjap",
-    "api_publica_tjba", "api_publica_tjce", "api_publica_tjdft", "api_publica_tjes",
-    "api_publica_tjgo", "api_publica_tjma", "api_publica_tjmg", "api_publica_tjms",
-    "api_publica_tjmt", "api_publica_tjpa", "api_publica_tjpb", "api_publica_tjpe",
-    "api_publica_tjpi", "api_publica_tjpr", "api_publica_tjrj", "api_publica_tjrn",
-    "api_publica_tjro", "api_publica_tjrr", "api_publica_tjrs", "api_publica_tjsc",
-    "api_publica_tjse", "api_publica_tjsp", "api_publica_tjto",
-
-    // Justiça do Trabalho (TRTs)
-    "api_publica_trt1", "api_publica_trt2", "api_publica_trt3", "api_publica_trt4",
-    "api_publica_trt5", "api_publica_trt6", "api_publica_trt7", "api_publica_trt8",
-    "api_publica_trt9", "api_publica_trt10", "api_publica_trt11", "api_publica_trt12",
-    "api_publica_trt13", "api_publica_trt14", "api_publica_trt15", "api_publica_trt16",
-    "api_publica_trt17", "api_publica_trt18", "api_publica_trt19", "api_publica_trt20",
-    "api_publica_trt21", "api_publica_trt22", "api_publica_trt23", "api_publica_trt24",
-
-    // Justiça Eleitoral (TREs)
-    "api_publica_tre-ac", "api_publica_tre-al", "api_publica_tre-am", "api_publica_tre-ap",
-    "api_publica_tre-ba", "api_publica_tre-ce", "api_publica_tre-df", "api_publica_tre-es",
-    "api_publica_tre-go", "api_publica_tre-ma", "api_publica_tre-mg", "api_publica_tre-ms",
-    "api_publica_tre-mt", "api_publica_tre-pa", "api_publica_tre-pb", "api_publica_tre-pe",
-    "api_publica_tre-pi", "api_publica_tre-pr", "api_publica_tre-rj", "api_publica_tre-rn",
-    "api_publica_tre-ro", "api_publica_tre-rr", "api_publica_tre-rs", "api_publica_tre-sc",
-    "api_publica_tre-se", "api_publica_tre-sp", "api_publica_tre-to",
-
-    // Justiça Militar
-    "api_publica_tjmmg", "api_publica_tjmrs", "api_publica_tjmmsp"
+// Lista de tribunais para consulta no Datajud
+const TRIBUNAIS = [
+  "API_PUBLICA_TJBA", "API_PUBLICA_TJPE", "API_PUBLICA_TJCE", "API_PUBLICA_TJAL",
+  "API_PUBLICA_TJMA", "API_PUBLICA_TJPB", "API_PUBLICA_TJPI", "API_PUBLICA_TJRN",
+  "API_PUBLICA_TJSE", "API_PUBLICA_TJSP", "API_PUBLICA_TJRJ", "API_PUBLICA_TJMG",
+  "API_PUBLICA_TJRS", "API_PUBLICA_TJPR", "API_PUBLICA_TJSC", "API_PUBLICA_TJDF",
+  "API_PUBLICA_TJGO", "API_PUBLICA_TJMT", "API_PUBLICA_MS", "API_PUBLICA_TJAM",
+  "API_PUBLICA_TJPA", "API_PUBLICA_TJAP", "API_PUBLICA_TJAC", "API_PUBLICA_TJRO",
+  "API_PUBLICA_TJRR", "API_PUBLICA_TO", "API_PUBLICA_TRF1", "API_PUBLICA_TRF2",
+  "API_PUBLICA_TRF3", "API_PUBLICA_TRF4", "API_PUBLICA_TRF5", "API_PUBLICA_TRF6",
+  "API_PUBLICA_TST", "API_PUBLICA_TRT1", "API_PUBLICA_TRT2", "API_PUBLICA_TRT3",
+  "API_PUBLICA_TRT5", "API_PUBLICA_TRT6", "API_PUBLICA_TRT13", "API_PUBLICA_TRT19",
+  "API_PUBLICA_TRE-BA", "API_PUBLICA_TRE-PE", "API_PUBLICA_TRE-DF", "API_PUBLICA_TRE-MG"
 ];
 
-// Rota de teste
 app.get('/', (req, res) => {
-    res.json({ status: "Servidor JusSmart ativo!", total_tribunais: ENDPOINTS_TRIBUNAIS.length });
+  res.json({ status: "Servidor JusSmart ativo!", total_tribunais: TRIBUNAIS.length });
 });
 
-// Rota de busca no aplicativo
 app.post('/consultar', async (req, res) => {
-    const { numero_processo } = req.body;
+  const { tipo, termo, numero_processo } = req.body;
+  const valorBusca = termo || numero_processo;
 
-    if (!numero_processo) {
-        return res.status(400).json({ erro: "Informe o número do processo." });
+  if (!valorBusca) {
+    return res.status(400).json({ erro: "Termo de busca não fornecido." });
+  }
+
+  let resultados = {};
+  let queryPayload = {};
+
+  if (tipo === 'cpf') {
+    const apenasNumeros = valorBusca.replace(/\D/g, '');
+    let cpfFormatado = apenasNumeros;
+    if (apenasNumeros.length === 11) {
+      cpfFormatado = apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
     }
 
-    const payload = {
-        query: {
-            match: {
-                numeroProcesso: numero_processo.replace(/\D/g, '')
-            }
+    queryPayload = {
+      query: {
+        bool: {
+          should: [
+            { match: { "qualificacaoEnvolvido.numeroDocumento": apenasNumeros } },
+            { match: { "qualificacaoEnvolvido.numeroDocumento": cpfFormatado } },
+            { match: { "presents.cpfCnpj": apenasNumeros } },
+            { match: { "presents.cpfCnpj": cpfFormatado } }
+          ]
         }
+      }
     };
-
-    const headers = {
-        'Authorization': `APIKey ${DATAJUD_API_KEY}`,
-        'Content-Type': 'application/json'
-    };
-
-    const resultados = {};
-
-    const buscas = ENDPOINTS_TRIBUNAIS.map(async (alias) => {
-        try {
-            const resp = await axios.post(`${BASE_URL}/${alias}/_search`, payload, { headers, timeout: 5000 });
-            const hits = resp.data?.hits?.hits || [];
-            resultados[alias] = { status: "sucesso", total_encontrado: hits.length, processos: hits };
-        } catch (err) {
-            resultados[alias] = { status: "sem_resultados_ou_erro", total_encontrado: 0, processos: [] };
+  } else if (tipo === 'nome') {
+    queryPayload = {
+      query: {
+        match_phrase: {
+          "nome": valorBusca
         }
-    });
+      }
+    };
+  } else {
+    const numeroLimpo = valorBusca.replace(/\D/g, '');
+    queryPayload = {
+      query: {
+        match: {
+          "numeroProcesso": numeroLimpo
+        }
+      }
+    };
+  }
 
-    await Promise.all(buscas);
-    return res.json(resultados);
+  const promessas = TRIBUNAIS.map(async (tribunal) => {
+    const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
+    try {
+      const response = await axios.post(url, queryPayload, {
+        headers: {
+          'Authorization': `APIKey ${API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 8000
+      });
+
+      const totalHits = response.data?.hits?.total?.value || 0;
+      resultados[tribunal] = {
+        status: "sucesso",
+        total_encontrado: totalHits,
+        processos: response.data?.hits?.hits || []
+      };
+    } catch (error) {
+      resultados[tribunal] = {
+        status: "sem_resultados_ou_erro",
+        total_encontrado: 0
+      };
+    }
+  });
+
+  await Promise.all(promessas);
+  res.json(resultados);
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor operando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
