@@ -29,8 +29,13 @@ jobs:
         run: |
           flutter create app_jussmart --org com.jussmart.app
           cd app_jussmart
+          
+          # Injetar permissao de internet no AndroidManifest
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
+
           if [ -f ../lib/main.dart ]; then cp -f ../lib/main.dart ./lib/main.dart; fi
           if [ -f ../pubspec.yaml ]; then cp -f ../pubspec.yaml ./pubspec.yaml; fi
+          
           flutter pub get
           flutter build apk --release
           cp build/app/outputs/flutter-apk/app-release.apk ../app-release.apk
