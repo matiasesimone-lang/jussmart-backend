@@ -26,14 +26,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Instalar dependencias
-        run: flutter pub get
-
-      - name: Compilar APK
-        run: flutter build apk --release
+      - name: Criar estrutura do projeto Flutter
+        run: |
+          mkdir -p temp_app
+          cd temp_app
+          flutter create . --org com.jussmart.app --app-name jussmart
+          cp -f ../lib/main.dart ./lib/main.dart || true
+          cp -f ../pubspec.yaml ./pubspec.yaml || true
+          flutter pub get
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk ../app-release.apk
 
       - name: Liberar APK para Download
         uses: actions/upload-artifact@v3
         with:
           name: JusSmart-App
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: app-release.apk
