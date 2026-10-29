@@ -9,7 +9,6 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const API_KEY = "c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
 
-// Lista de tribunais para consulta no Datajud
 const TRIBUNAIS = [
   "API_PUBLICA_TJBA", "API_PUBLICA_TJPE", "API_PUBLICA_TJCE", "API_PUBLICA_TJAL",
   "API_PUBLICA_TJMA", "API_PUBLICA_TJPB", "API_PUBLICA_TJPI", "API_PUBLICA_TJRN",
@@ -88,16 +87,47 @@ app.post('/consultar', async (req, res) => {
         timeout: 8000
       });
 
+      const hits = response.data?.hits?.hits || [];
       const totalHits = response.data?.hits?.total?.value || 0;
+
+      // Processa os detalhes de cada processo encontrado
+      const processosDetalhados = hits.map(hit => {
+        const source = hit._source || {};
+        const movimentos = source.movimentos || [];
+        
+        // Ordena movimentos por data mais recente
+        movimentos.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
+        const ultimaMov = movimentos[0] || {};
+
+        // Define status
+        const baixado = source.baixa || false;
+        const statusProcesso = baixado ? "Inativo / Arquivado" : "Ativo";
+
+        return {
+          numeroProcesso: source.numeroProcesso,
+          classe: source.classe?.nome || "Não informada",
+          tribunal: source.tribunal,
+          status: statusProcesso,
+          ultimaMovimentacao: {
+            nome: ultimaMov.nome || "Sem movimentação recente registrada",
+            data: ultimaMov.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : "N/A"
+          },
+          previsaoProximoAndamento: baixado 
+            ? "Processo arquivado. Sem previsão de movimentações automáticas." 
+            : "Estimativa de próxima movimentação em até 30 a 60 dias úteis."
+        };
+      });
+
       resultados[tribunal] = {
-        status: "sucesso",
+        status: totalHits > 0 ? "sucesso" : "sem_resultados",
         total_encontrado: totalHits,
-        processos: response.data?.hits?.hits || []
+        processos: processosDetalhados
       };
     } catch (error) {
       resultados[tribunal] = {
         status: "sem_resultados_ou_erro",
-        total_encontrado: 0
+        total_encontrado: 0,
+        processos: []
       };
     }
   });
