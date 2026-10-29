@@ -14,28 +14,31 @@ class JusSmartApp extends StatelessWidget {
     return MaterialApp(
       title: 'JusSmart',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A),
-          primary: const Color(0xFF1E3A8A),
-          secondary: const Color(0xFF0D9488),
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF06B6D4),
+          surface: Color(0xFF1E293B),
         ),
-        useMaterial3: true,
       ),
-      home: const TelaPrincipal(),
+      home: const TelaPrincipalJusSmart(),
     );
   }
 }
 
-class TelaPrincipal extends StatefulWidget {
-  const TelaPrincipal({super.key});
+class TelaPrincipalJusSmart extends StatefulWidget {
+  const TelaPrincipalJusSmart({super.key});
 
   @override
-  State<TelaPrincipal> createState() => _TelaPrincipalState();
+  State<TelaPrincipalJusSmart> createState() => _TelaPrincipalJusSmartState();
 }
 
-class _TelaPrincipalState extends State<TelaPrincipal> {
-  final TextEditingController _controladorBusca = TextEditingController();
+class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
+  int _abaAtiva = 0; // 0: Minha Central, 1: Busca Externa
+  String _filtroStatus = 'todos'; // todos, ativos, inativos
+  
+  // Dados de busca externa
+  final TextEditingController _controladorBuscaExterna = TextEditingController();
   String _tipoConsulta = 'numero'; // 'numero', 'cpf', 'nome'
   bool _carregando = false;
   Map<String, dynamic> _resultadosBusca = {};
@@ -43,11 +46,11 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
   final String _urlBackend = 'https://jussmart-backend.onrender.com/consultar';
 
-  Future<void> _executarBusca() async {
-    final termo = _controladorBusca.text.trim();
+  Future<void> _executarBuscaExterna() async {
+    final termo = _controladorBuscaExterna.text.trim();
     if (termo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, informe os dados para a busca.')),
+        const SnackBar(content: Text('Por favor, informe o termo para busca.')),
       );
       return;
     }
@@ -77,12 +80,12 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro na requisição ao servidor: ${response.statusCode}')),
+          SnackBar(content: Text('Erro no servidor: ${response.statusCode}')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao conectar com a API: $e')),
+        SnackBar(content: Text('Erro de conexão com o servidor: $e')),
       );
     } finally {
       setState(() {
@@ -93,23 +96,23 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
   void _gerarResumo(Map<String, dynamic> dados) {
     int totalProcessos = 0;
-    int tribunaisComResultados = 0;
+    int tribunaisEncontrados = 0;
 
     dados.forEach((key, value) {
       if (value is Map && value.containsKey('total_encontrado')) {
         int qtd = value['total_encontrado'] ?? 0;
         if (qtd > 0) {
           totalProcessos += qtd;
-          tribunaisComResultados++;
+          tribunaisEncontrados++;
         }
       }
     });
 
     setState(() {
       if (totalProcessos > 0) {
-        _resumoGeral = 'Resumo da Consulta: Foram localizados $totalProcessos processo(s) em $tribunaisComResultados tribunal(ais) consultado(s).';
+        _resumoGeral = 'Localizados $totalProcessos processo(s) em $tribunaisEncontrados tribunal(ais).';
       } else {
-        _resumoGeral = 'Resumo da Consulta: Nenhum processo foi localizado nos tribunais pesquisados.';
+        _resumoGeral = 'Nenhum processo encontrado nos 85 tribunais consultados.';
       }
     });
   }
@@ -117,245 +120,425 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFF0B132B),
       appBar: AppBar(
-        elevation: 2,
-        backgroundColor: const Color(0xFF1E3A8A),
-        foregroundColor: Colors.white,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.gavel, color: Colors.amber, size: 24),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'JusSmart',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, letterSpacing: 0.5),
-            ),
-          ],
+        backgroundColor: const Color(0xFF0B132B),
+        elevation: 0,
+        title: const Text(
+          'JusSmart',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
-        centerTitle: true,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: Icon(Icons.star, color: Color(0xFF84CC16), size: 32),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Card de Boas-vindas e Identidade Visual
-            Card(
-              elevation: 0,
-              color: const Color(0xFFEFF6FF),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFBFDBFE)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: const [
-                    Icon(Icons.search_sharp, color: Color(0xFF1E3A8A), size: 36),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Consulta Unificada Datajud\nPesquise em até 85 tribunais simultaneamente.',
-                        style: TextStyle(
-                          color: Color(0xFF1E3A8A),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B).withOpacity(0.8),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white10),
+          ),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Badge JusSmart com Ícone de Balança
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Seleção do tipo de busca
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ChoiceChip(
-                  label: const Text('Nº Processo'),
-                  selected: _tipoConsulta == 'numero',
-                  onSelected: (val) => setState(() => _tipoConsulta = 'numero'),
-                  selectedColor: const Color(0xFF1E3A8A),
-                  labelStyle: TextStyle(
-                    color: _tipoConsulta == 'numero' ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                ),
-                ChoiceChip(
-                  label: const Text('CPF / CNPJ'),
-                  selected: _tipoConsulta == 'cpf',
-                  onSelected: (val) => setState(() => _tipoConsulta = 'cpf'),
-                  selectedColor: const Color(0xFF1E3A8A),
-                  labelStyle: TextStyle(
-                    color: _tipoConsulta == 'cpf' ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                ChoiceChip(
-                  label: const Text('Nome da Parte'),
-                  selected: _tipoConsulta == 'nome',
-                  onSelected: (val) => setState(() => _tipoConsulta = 'nome'),
-                  selectedColor: const Color(0xFF1E3A8A),
-                  labelStyle: TextStyle(
-                    color: _tipoConsulta == 'nome' ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Campo de texto para pesquisa
-            TextField(
-              controller: _controladorBusca,
-              keyboardType: _tipoConsulta == 'nome' ? TextInputType.name : TextInputType.number,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                labelText: _tipoConsulta == 'numero'
-                    ? 'Número do Processo (CNJ)'
-                    : _tipoConsulta == 'cpf'
-                        ? 'CPF ou CNPJ'
-                        : 'Nome Completo da Parte',
-                hintText: _tipoConsulta == 'numero'
-                    ? 'Ex: 00000000020268170001'
-                    : _tipoConsulta == 'cpf'
-                        ? 'Ex: 000.000.000-00'
-                        : 'Ex: José Rivaldo',
-                prefixIcon: const Icon(Icons.manage_search, color: Color(0xFF1E3A8A)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Botão de Pesquisa
-            ElevatedButton.icon(
-              onPressed: _carregando ? null : _executarBusca,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: _carregando
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Icon(Icons.search),
-              label: Text(
-                _carregando ? 'Consultando Tribunais...' : 'Buscar em Todos os Tribunais',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Card do Resumo (exibido apenas após consulta)
-            if (_resumoGeral.isNotEmpty) ...[
-              Card(
-                color: const Color(0xFFF0FDF4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFFBBF7D0)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
                   child: Row(
-                    children: [
-                      const Icon(Icons.summarize, color: Colors.green),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _resumoGeral,
-                          style: const TextStyle(
-                            color: Color(0xFF166534),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.balance, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'JusSmart',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              // Título e Subtítulo
+              const Text(
+                'Plataforma Processual',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Gestão de Processos e Consulta Externa',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Botões Principais: Minha Central e Busca Externa
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => setState(() => _abaAtiva = 0),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _abaAtiva == 0
+                            ? const Color(0xFF06B6D4)
+                            : const Color(0xFF0F172A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.assignment, size: 18),
+                      label: const Text(
+                        'Minha Central',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => setState(() => _abaAtiva = 1),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _abaAtiva == 1
+                            ? const Color(0xFF06B6D4)
+                            : const Color(0xFF0F172A),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.search, size: 18),
+                      label: const Text(
+                        'Busca Externa',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
-            ],
 
-            // Lista de Resultados por Tribunal
-            if (_resultadosBusca.isNotEmpty)
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _resultadosBusca.keys.length,
-                itemBuilder: (context, index) {
-                  String alias = _resultadosBusca.keys.elementAt(index);
-                  var info = _resultadosBusca[alias];
-                  if (info is! Map) return const SizedBox.shrink();
-
-                  int total = info['total_encontrado'] ?? 0;
-                  String status = info['status'] ?? '';
-                  bool encontrou = total > 0;
-
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: encontrou ? Colors.green.shade100 : Colors.grey.shade200,
-                        child: Icon(
-                          encontrou ? Icons.check : Icons.close,
-                          color: encontrou ? Colors.green.shade800 : Colors.grey,
-                        ),
-                      ),
-                      title: Text(
-                        alias.toUpperCase(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('Status: $status'),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: encontrou ? Colors.green.shade50 : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: encontrou ? Colors.green : Colors.grey.shade300,
+              // Conteúdo da Aba 0: Minha Central
+              if (_abaAtiva == 0) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: ElevatedButton.icon(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text(
-                          '$total processo(s)',
-                          style: TextStyle(
-                            color: encontrou ? Colors.green.shade900 : Colors.black54,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const Text(
+                          'Cadastrar Processo',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
-                  );
-                },
-              )
-            else if (!_carregando)
-              const Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(
-                  child: Text(
-                    'Selecione a modalidade de busca, preencha o termo e clique em buscar.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 4,
+                      child: OutlinedButton.icon(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFF334155),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text(
+                          'Repor\nDados',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Campo de Filtro Local
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Filtrar lista por nº, assunto ou vara...',
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white38),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Abas de Status: Todos (0), Ativos (0), Inativos (0)
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStatusTab('Todos (0)', 'todos', null),
+                      _buildStatusTab('Ativos (0)', 'ativos', const Color(0xFF84CC16)),
+                      _buildStatusTab('Inativos (0)', 'inativos', const Color(0xFFEF4444)),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Conteúdo da Aba 1: Busca Externa Datajud
+              if (_abaAtiva == 1) ...[
+                // Seleção do tipo de consulta externa
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Nº Processo'),
+                      selected: _tipoConsulta == 'numero',
+                      onSelected: (val) => setState(() {
+                        _tipoConsulta = 'numero';
+                        _controladorBuscaExterna.clear();
+                      }),
+                      selectedColor: const Color(0xFF06B6D4),
+                    ),
+                    ChoiceChip(
+                      label: const Text('CPF / CNPJ'),
+                      selected: _tipoConsulta == 'cpf',
+                      onSelected: (val) => setState(() {
+                        _tipoConsulta = 'cpf';
+                        _controladorBuscaExterna.clear();
+                      }),
+                      selectedColor: const Color(0xFF06B6D4),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Nome Parte'),
+                      selected: _tipoConsulta == 'nome',
+                      onSelected: (val) => setState(() {
+                        _tipoConsulta = 'nome';
+                        _controladorBuscaExterna.clear();
+                      }),
+                      selectedColor: const Color(0xFF06B6D4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Campo de Entrada para Busca Externa
+                TextField(
+                  controller: _controladorBuscaExterna,
+                  keyboardType: _tipoConsulta == 'nome' ? TextInputType.text : TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: _tipoConsulta == 'numero'
+                        ? 'Número do Processo (CNJ)'
+                        : _tipoConsulta == 'cpf'
+                            ? 'CPF ou CNPJ'
+                            : 'Nome Completo da Parte',
+                    labelStyle: const TextStyle(color: Colors.white60),
+                    hintText: _tipoConsulta == 'numero'
+                        ? 'Ex: 00000000020268170001'
+                        : _tipoConsulta == 'cpf'
+                            ? 'Ex: 000.000.000-00'
+                            : 'Ex: José Rivaldo',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    prefixIcon: const Icon(Icons.manage_search, color: Color(0xFF06B6D4)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Botão de Pesquisa Externa nos 85 Tribunais
+                ElevatedButton.icon(
+                  onPressed: _carregando ? null : _executarBuscaExterna,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF06B6D4),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: _carregando
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.search),
+                  label: Text(
+                    _carregando ? 'Consultando Tribunais...' : 'Buscar nos 85 Tribunais',
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                // Card de Resumo do Resultado
+                if (_resumoGeral.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF064E3B).withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF059669)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Color(0xFF34D399), size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _resumoGeral,
+                            style: const TextStyle(color: Color(0xFFA7F3D0), fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Lista de Resultados
+                if (_resultadosBusca.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _resultadosBusca.keys.length,
+                    itemBuilder: (context, index) {
+                      String alias = _resultadosBusca.keys.elementAt(index);
+                      var info = _resultadosBusca[alias];
+                      if (info is! Map) return const SizedBox.shrink();
+
+                      int total = info['total_encontrado'] ?? 0;
+                      String status = info['status'] ?? '';
+                      bool encontrou = total > 0;
+
+                      return Card(
+                        color: const Color(0xFF0F172A),
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          title: Text(
+                            alias.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Status: $status',
+                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: encontrou ? const Color(0xFF065F46) : const Color(0xFF334155),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$total processos',
+                              style: TextStyle(
+                                color: encontrou ? const Color(0xFF34D399) : Colors.white60,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusTab(String label, String statusKey, Color? indicatorColor) {
+    bool selecionado = _filtroStatus == statusKey;
+    return GestureDetector(
+      onTap: () => setState(() => _filtroStatus = statusKey),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selecionado ? const Color(0xFF334155) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            if (indicatorColor != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: indicatorColor,
+                  shape: BoxShape.circle,
+                ),
               ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: selecionado ? Colors.white : Colors.white38,
+                fontSize: 12,
+                fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),
