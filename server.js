@@ -9,74 +9,131 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const API_KEY = "APIKey c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
 
-// Teste focado especificamente no TJBA para diagnóstico
-app.post('/consultar', async (req, res) => {
-  const { tipo, termo } = req.body;
-  const valorBusca = termo || "";
-  const numeroLimpo = valorBusca.replace(/\D/g, '');
+const TRIBUNAIS = [
+  "API_PUBLICA_TJBA", "API_PUBLICA_TJPE", "API_PUBLICA_TJCE", "API_PUBLICA_TJAL",
+  "API_PUBLICA_TJMA", "API_PUBLICA_TJPB", "API_PUBLICA_TJPI", "API_PUBLICA_TJRN",
+  "API_PUBLICA_TJSE", "API_PUBLICA_TJSP", "API_PUBLICA_TJRJ", "API_PUBLICA_TJMG",
+  "API_PUBLICA_TJRS", "API_PUBLICA_TJPR", "API_PUBLICA_TJSC", "API_PUBLICA_TJDF",
+  "API_PUBLICA_TJGO", "API_PUBLICA_TJMT", "API_PUBLICA_MS", "API_PUBLICA_TJAM",
+  "API_PUBLICA_TJPA", "API_PUBLICA_TJAP", "API_PUBLICA_TJAC", "API_PUBLICA_TJRO",
+  "API_PUBLICA_TJRR", "API_PUBLICA_TO", "API_PUBLICA_TRF1", "API_PUBLICA_TRF2",
+  "API_PUBLICA_TRF3", "API_PUBLICA_TRF4", "API_PUBLICA_TRF5", "API_PUBLICA_TRF6"
+];
 
-  let queryPayload = {
-    query: {
-      match: {
-        "numeroProcesso": numeroLimpo
-      }
-    }
-  };
+app.get('/', (req, res) => {
+  res.json({ status: "Servidor JusSmart ativo!", total_tribunais: TRIBUNAIS.length });
+});
+
+app.post('/consultar', async (req, res) => {
+  const { tipo, termo, numero_processo } = req.body;
+  const valorBusca = termo || numero_processo;
+
+  if (!valorBusca) {
+    return res.status(400).json({ erro: "Termo de busca não fornecido." });
+  }
+
+  let resultados = {};
+  let queryPayload = {};
 
   if (tipo === 'cpf') {
+    const apenasNumeros = valorBusca.replace(/\D/g, '');
+    let cpfFormatado = apenasNumeros;
+    if (apenasNumeros.length === 11) {
+      cpfFormatado = apenasNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    } else if (apenasNumeros.length === 14) {
+      cpfFormatado = apenasNumeros.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    }
+
     queryPayload = {
       query: {
         bool: {
           should: [
-            { match: { "qualificacaoEnvolvido.numeroDocumento": numeroLimpo } },
-            { match: { "presents.cpfCnpj": numeroLimpo } }
+            { match: { "qualificacaoEnvolvido.numeroDocumento": apenasNumeros } },
+            { match: { "qualificacaoEnvolvido.numeroDocumento": cpfFormatado } },
+            { match: { "presents.cpfCnpj": apenasNumeros } },
+            { match: { "presents.cpfCnpj": cpfFormatado } }
           ]
+        }
+      }
+    };
+  } else if (tipo === 'nome') {
+    queryPayload = {
+      query: {
+        bool: {
+          should: [
+            { match_phrase: { "presents.nome": valorBusca } },
+            { match_phrase: { "qualificacaoEnvolvido.nome": valorBusca } },
+            { match_phrase: { "nome": valorBusca } }
+          ]
+        }
+      }
+    };
+  } else {
+    const numeroLimpo = valorBusca.replace(/\D/g, '');
+    queryPayload = {
+      query: {
+        match: {
+          "numeroProcesso": numeroLimpo
         }
       }
     };
   }
 
-  try {
-    const url = "https://api-publica.datajud.cnj.jus.br/API_PUBLICA_TJBA/_search";
-    console.log("Enviando requisição ao TJBA com o payload:", JSON.stringify(queryPayload));
+  const promessas = TRIBUNAIS.map(async (tribunal) => {
+    const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
+    try {
+      const response = await axios.post(url, queryPayload, {
+        headers: {
+          'Authorization': API_KEY,
+          'Content-Type': 'application/json'
+        },
+        timeout: 12000
+      });
 
-    const response = await axios.post(url, queryPayload, {
-      headers: {
-        'Authorization': API_KEY,
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000
-    });
+      const hits = response.data?.hits?.hits || [];
+      const totalHits = response.data?.hits?.total?.value || 0;
 
-    console.log("Resposta bruta do Datajud TJBA:", JSON.stringify(response.data));
+      const processosDetalhados = hits.map(hit => {
+        const source = hit._source || {};
+        const movimentos = source.movimentos || [];
+        
+        movimentos.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
+        const ultimaMov = movimentos[0] || {};
+        const baixado = source.baixa || false;
 
-    const hits = response.data?.hits?.hits || [];
-    const total = response.data?.hits?.total?.value || 0;
+        return {
+          numeroProcesso: source.numeroProcesso || "Sem número registrado",
+          classe: source.classe?.nome || "Não informada",
+          tribunal: source.tribunal || tribunal.replace("API_PUBLICA_", ""),
+          status: baixado ? "Inativo / Arquivado" : "Ativo",
+          ultimaMovimentacao: {
+            nome: ultimaMov.nome || "Sem movimentação recente registrada",
+            data: ultimaMov.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : "N/A"
+          },
+          previsaoProximoAndamento: baixado 
+            ? "Processo arquivado. Sem previsão de movimentações automáticas." 
+            : "Estimativa de próxima movimentação em até 30 a 60 dias úteis."
+        };
+      });
 
-    res.json({
-      "API_PUBLICA_TJBA": {
-        status: "sucesso",
-        total_encontrado: total,
-        detalhes_resposta: response.data,
-        processos: hits.map(h => ({
-          numeroProcesso: h._source?.numeroProcesso,
-          classe: h._source?.classe?.nome,
-          status: h._source?.baixa ? "Inativo / Arquivado" : "Ativo",
-          ultimaMovimentacao: h._source?.movimentos?.[0]?.nome || "Sem movimentação"
-        }))
-      }
-    });
+      resultados[tribunal] = {
+        status: totalHits > 0 ? "sucesso" : "sem_resultados",
+        total_encontrado: totalHits,
+        processos: processosDetalhados
+      };
+    } catch (error) {
+      resultados[tribunal] = {
+        status: "sem_resultados_ou_erro",
+        total_encontrado: 0,
+        processos: []
+      };
+    }
+  });
 
-  } catch (error) {
-    console.error("Erro na chamada ao Datajud:", error.response ? error.response.data : error.message);
-    res.status(500).json({
-      erro: "Falha na comunicação com o Datajud",
-      mensagem_detalhada: error.response ? error.response.data : error.message,
-      codigo_status: error.response ? error.response.status : 500
-    });
-  }
+  await Promise.all(promessas);
+  res.json(resultados);
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor de Diagnóstico rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
