@@ -7,11 +7,8 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-
-// Chave pública fornecida pelo Datajud CNJ
 const API_KEY = "APIKey c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
 
-// Lista de tribunais para consulta unificada no Datajud
 const TRIBUNAIS = [
   "API_PUBLICA_TJBA", "API_PUBLICA_TJPE", "API_PUBLICA_TJCE", "API_PUBLICA_TJAL",
   "API_PUBLICA_TJMA", "API_PUBLICA_TJPB", "API_PUBLICA_TJPI", "API_PUBLICA_TJRN",
@@ -54,8 +51,7 @@ app.post('/consultar', async (req, res) => {
             { match: { "qualificacaoEnvolvido.numeroDocumento": apenasNumeros } },
             { match: { "qualificacaoEnvolvido.numeroDocumento": cpfFormatado } },
             { match: { "presents.cpfCnpj": apenasNumeros } },
-            { match: { "presents.cpfCnpj": cpfFormatado } },
-            { match_phrase: { "presents.nome": valorBusca } }
+            { match: { "presents.cpfCnpj": cpfFormatado } }
           ]
         }
       }
@@ -73,18 +69,17 @@ app.post('/consultar', async (req, res) => {
       }
     };
   } else {
-    // Número do processo limpo (apenas dígitos)
-    const numeroApenasNumeros = valorBusca.replace(/\D/g, '');
+    // Número do processo formatado sem pontuação nem traços
+    const numeroLimpo = valorBusca.replace(/\D/g, '');
     queryPayload = {
       query: {
         match: {
-          "numeroProcesso": numeroApenasNumeros
+          "numeroProcesso": numeroLimpo
         }
       }
     };
   }
 
-  // Consulta simultânea nos tribunais
   const promessas = TRIBUNAIS.map(async (tribunal) => {
     const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
     try {
@@ -103,16 +98,9 @@ app.post('/consultar', async (req, res) => {
         const source = hit._source || {};
         const movimentos = source.movimentos || [];
         
-        // Ordena movimentos por data mais recente
         movimentos.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
         const ultimaMov = movimentos[0] || {};
         const baixado = source.baixa || false;
-
-        // Identifica se há audiência marcada nas movimentações
-        const movAudiencia = movimentos.find(m => 
-          (m.nome || '').toLowerCase().includes('audiência') || 
-          (m.nome || '').toLowerCase().includes('audiencia')
-        );
 
         return {
           numeroProcesso: source.numeroProcesso || "Sem número registrado",
@@ -123,10 +111,6 @@ app.post('/consultar', async (req, res) => {
             nome: ultimaMov.nome || "Sem movimentação recente registrada",
             data: ultimaMov.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : "N/A"
           },
-          audiencia: movAudiencia ? {
-            evento: movAudiencia.nome,
-            data: movAudiencia.dataHora ? new Date(movAudiencia.dataHora).toLocaleDateString('pt-BR') : "Data não especificada"
-          } : null,
           previsaoProximoAndamento: baixado 
             ? "Processo arquivado. Sem previsão de movimentações automáticas." 
             : "Estimativa de próxima movimentação em até 30 a 60 dias úteis."
