@@ -34,12 +34,11 @@ class TelaPrincipalJusSmart extends StatefulWidget {
 }
 
 class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
-  int _abaAtiva = 0; // 0: Minha Central, 1: Busca Externa
-  String _filtroStatus = 'todos'; // todos, ativos, inativos
+  int _abaAtiva = 1; // Inicia direto na Busca Externa
+  String _filtroStatus = 'todos';
   
-  // Dados de busca externa
   final TextEditingController _controladorBuscaExterna = TextEditingController();
-  String _tipoConsulta = 'numero'; // 'numero', 'cpf', 'nome'
+  String _tipoConsulta = 'cpf'; // Padrão CPF
   bool _carregando = false;
   Map<String, dynamic> _resultadosBusca = {};
   String _resumoGeral = '';
@@ -151,7 +150,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Badge JusSmart com Ícone de Balança
               Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -180,7 +178,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
               ),
               const SizedBox(height: 14),
 
-              // Título e Subtítulo
               const Text(
                 'Plataforma Processual',
                 textAlign: TextAlign.center,
@@ -201,7 +198,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
               ),
               const SizedBox(height: 20),
 
-              // Botões Principais: Minha Central e Busca Externa
               Row(
                 children: [
                   Expanded(
@@ -249,93 +245,7 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
               ),
               const SizedBox(height: 16),
 
-              // Conteúdo da Aba 0: Minha Central
-              if (_abaAtiva == 0) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add, size: 20),
-                        label: const Text(
-                          'Cadastrar Processo',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 4,
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFF334155),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(Icons.refresh, size: 16),
-                        label: const Text(
-                          'Repor\nDados',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Campo de Filtro Local
-                TextField(
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Filtrar lista por nº, assunto ou vara...',
-                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white38),
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Abas de Status: Todos (0), Ativos (0), Inativos (0)
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatusTab('Todos (0)', 'todos', null),
-                      _buildStatusTab('Ativos (0)', 'ativos', const Color(0xFF84CC16)),
-                      _buildStatusTab('Inativos (0)', 'inativos', const Color(0xFFEF4444)),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Conteúdo da Aba 1: Busca Externa Datajud
               if (_abaAtiva == 1) ...[
-                // Seleção do tipo de consulta externa
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -370,7 +280,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                 ),
                 const SizedBox(height: 12),
 
-                // Campo de Entrada para Busca Externa
                 TextField(
                   controller: _controladorBuscaExterna,
                   keyboardType: _tipoConsulta == 'nome' ? TextInputType.text : TextInputType.number,
@@ -399,7 +308,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                 ),
                 const SizedBox(height: 14),
 
-                // Botão de Pesquisa Externa nos 85 Tribunais
                 ElevatedButton.icon(
                   onPressed: _carregando ? null : _executarBuscaExterna,
                   style: ElevatedButton.styleFrom(
@@ -423,7 +331,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                   ),
                 ),
 
-                // Card de Resumo do Resultado
                 if (_resumoGeral.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   Container(
@@ -448,7 +355,7 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                   ),
                 ],
 
-                // Lista de Resultados
+                // Exibição dos cards detalhados por processo
                 if (_resultadosBusca.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   ListView.builder(
@@ -461,40 +368,49 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                       if (info is! Map) return const SizedBox.shrink();
 
                       int total = info['total_encontrado'] ?? 0;
-                      String status = info['status'] ?? '';
-                      bool encontrou = total > 0;
+                      List processos = info['processos'] ?? [];
+
+                      if (total == 0) return const SizedBox.shrink();
 
                       return Card(
                         color: const Color(0xFF0F172A),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: ExpansionTile(
                           title: Text(
                             alias.toUpperCase(),
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF06B6D4),
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 14,
                             ),
                           ),
                           subtitle: Text(
-                            'Status: $status',
-                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            '$total processo(s) localizado(s)',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
                           ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: encontrou ? const Color(0xFF065F46) : const Color(0xFF334155),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$total processos',
-                              style: TextStyle(
-                                color: encontrou ? const Color(0xFF34D399) : Colors.white60,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                          children: processos.map<Widget>((proc) {
+                            return Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Processo: ${proc['numeroProcesso'] ?? 'N/A'}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('Classe: ${proc['classe']}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                  Text('Status: ${proc['status']}', style: TextStyle(color: proc['status'] == 'Ativo' ? Colors.greenAccent : Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 6),
+                                  Text('Última Movimentação (${proc['ultimaMovimentacao']['data']}):', style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  Text('${proc['ultimaMovimentacao']['nome']}', style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                                  const SizedBox(height: 6),
+                                  Text('Previsão: ${proc['previsaoProximoAndamento']}', style: const TextStyle(color: Colors.cyanAccent, fontSize: 11, fontStyle: FontStyle.italic)),
+                                  const Divider(color: Colors.white24),
+                                ],
                               ),
-                            ),
-                          ),
+                            );
+                          }).toList(),
                         ),
                       );
                     },
@@ -503,43 +419,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
               ],
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusTab(String label, String statusKey, Color? indicatorColor) {
-    bool selecionado = _filtroStatus == statusKey;
-    return GestureDetector(
-      onTap: () => setState(() => _filtroStatus = statusKey),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selecionado ? const Color(0xFF334155) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            if (indicatorColor != null) ...[
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: indicatorColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: selecionado ? Colors.white : Colors.white38,
-                fontSize: 12,
-                fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
         ),
       ),
     );
