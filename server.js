@@ -7,7 +7,9 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const API_KEY = "c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
+
+// Chave pública fornecida pelo Datajud CNJ
+const API_KEY = "APIKey c3VwZXJ1c2VyaW5mcmE6N2M1YjI4NjgtM2M1Yi00OWU1LTk1OWEtN2IzYjU0YWIyYTM4";
 
 // Lista de tribunais para consulta unificada no Datajud
 const TRIBUNAIS = [
@@ -18,18 +20,13 @@ const TRIBUNAIS = [
   "API_PUBLICA_TJGO", "API_PUBLICA_TJMT", "API_PUBLICA_MS", "API_PUBLICA_TJAM",
   "API_PUBLICA_TJPA", "API_PUBLICA_TJAP", "API_PUBLICA_TJAC", "API_PUBLICA_TJRO",
   "API_PUBLICA_TJRR", "API_PUBLICA_TO", "API_PUBLICA_TRF1", "API_PUBLICA_TRF2",
-  "API_PUBLICA_TRF3", "API_PUBLICA_TRF4", "API_PUBLICA_TRF5", "API_PUBLICA_TRF6",
-  "API_PUBLICA_TST", "API_PUBLICA_TRT1", "API_PUBLICA_TRT2", "API_PUBLICA_TRT3",
-  "API_PUBLICA_TRT4", "API_PUBLICA_TRT5", "API_PUBLICA_TRT6", "API_PUBLICA_TRT13",
-  "API_PUBLICA_TRT19", "API_PUBLICA_TRE-BA", "API_PUBLICA_TRE-PE", "API_PUBLICA_TRE-DF"
+  "API_PUBLICA_TRF3", "API_PUBLICA_TRF4", "API_PUBLICA_TRF5", "API_PUBLICA_TRF6"
 ];
 
-// Rota de verificação de status
 app.get('/', (req, res) => {
   res.json({ status: "Servidor JusSmart ativo!", total_tribunais: TRIBUNAIS.length });
 });
 
-// Rota unificada de consulta aos tribunais
 app.post('/consultar', async (req, res) => {
   const { tipo, termo, numero_processo } = req.body;
   const valorBusca = termo || numero_processo;
@@ -57,7 +54,8 @@ app.post('/consultar', async (req, res) => {
             { match: { "qualificacaoEnvolvido.numeroDocumento": apenasNumeros } },
             { match: { "qualificacaoEnvolvido.numeroDocumento": cpfFormatado } },
             { match: { "presents.cpfCnpj": apenasNumeros } },
-            { match: { "presents.cpfCnpj": cpfFormatado } }
+            { match: { "presents.cpfCnpj": cpfFormatado } },
+            { match_phrase: { "presents.nome": valorBusca } }
           ]
         }
       }
@@ -75,26 +73,27 @@ app.post('/consultar', async (req, res) => {
       }
     };
   } else {
-    const numeroLimpo = valorBusca.replace(/\D/g, '');
+    // Número do processo limpo (apenas dígitos)
+    const numeroApenasNumeros = valorBusca.replace(/\D/g, '');
     queryPayload = {
       query: {
         match: {
-          "numeroProcesso": numeroLimpo
+          "numeroProcesso": numeroApenasNumeros
         }
       }
     };
   }
 
-  // Executa as consultas em lote para todos os tribunais
+  // Consulta simultânea nos tribunais
   const promessas = TRIBUNAIS.map(async (tribunal) => {
     const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
     try {
       const response = await axios.post(url, queryPayload, {
         headers: {
-          'Authorization': `APIKey ${API_KEY}`,
+          'Authorization': API_KEY,
           'Content-Type': 'application/json'
         },
-        timeout: 9000
+        timeout: 12000
       });
 
       const hits = response.data?.hits?.hits || [];
@@ -104,21 +103,30 @@ app.post('/consultar', async (req, res) => {
         const source = hit._source || {};
         const movimentos = source.movimentos || [];
         
+        // Ordena movimentos por data mais recente
         movimentos.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
         const ultimaMov = movimentos[0] || {};
-
         const baixado = source.baixa || false;
-        const statusProcesso = baixado ? "Inativo / Arquivado" : "Ativo";
+
+        // Identifica se há audiência marcada nas movimentações
+        const movAudiencia = movimentos.find(m => 
+          (m.nome || '').toLowerCase().includes('audiência') || 
+          (m.nome || '').toLowerCase().includes('audiencia')
+        );
 
         return {
-          numeroProcesso: source.numeroProcesso,
+          numeroProcesso: source.numeroProcesso || "Sem número registrado",
           classe: source.classe?.nome || "Não informada",
           tribunal: source.tribunal || tribunal.replace("API_PUBLICA_", ""),
-          status: statusProcesso,
+          status: baixado ? "Inativo / Arquivado" : "Ativo",
           ultimaMovimentacao: {
             nome: ultimaMov.nome || "Sem movimentação recente registrada",
             data: ultimaMov.dataHora ? new Date(ultimaMov.dataHora).toLocaleDateString('pt-BR') : "N/A"
           },
+          audiencia: movAudiencia ? {
+            evento: movAudiencia.nome,
+            data: movAudiencia.dataHora ? new Date(movAudiencia.dataHora).toLocaleDateString('pt-BR') : "Data não especificada"
+          } : null,
           previsaoProximoAndamento: baixado 
             ? "Processo arquivado. Sem previsão de movimentações automáticas." 
             : "Estimativa de próxima movimentação em até 30 a 60 dias úteis."
