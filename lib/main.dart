@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -34,11 +35,10 @@ class TelaPrincipalJusSmart extends StatefulWidget {
 }
 
 class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
-  int _abaAtiva = 1; // Inicia direto na Busca Externa
-  String _filtroStatus = 'todos';
+  int _abaAtiva = 1;
   
   final TextEditingController _controladorBuscaExterna = TextEditingController();
-  String _tipoConsulta = 'cpf'; // Padrão CPF
+  String _tipoConsulta = 'cpf'; // 'numero', 'cpf', 'nome'
   bool _carregando = false;
   Map<String, dynamic> _resultadosBusca = {};
   String _resumoGeral = '';
@@ -114,6 +114,20 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
         _resumoGeral = 'Nenhum processo encontrado nos 85 tribunais consultados.';
       }
     });
+  }
+
+  TextInputType _obterTipoTeclado() {
+    if (_tipoConsulta == 'nome') {
+      return TextInputType.text;
+    }
+    return TextInputType.number;
+  }
+
+  List<TextInputFormatter>? _obterFormatadores() {
+    if (_tipoConsulta == 'cpf') {
+      return [CpfCnpjInputFormatter()];
+    }
+    return null;
   }
 
   @override
@@ -216,7 +230,7 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                       icon: const Icon(Icons.assignment, size: 18),
                       label: const Text(
                         'Minha Central',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -237,7 +251,7 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                       icon: const Icon(Icons.search, size: 18),
                       label: const Text(
                         'Busca Externa',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -246,43 +260,51 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
               const SizedBox(height: 16),
 
               if (_abaAtiva == 1) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Nº Processo'),
-                      selected: _tipoConsulta == 'numero',
-                      onSelected: (val) => setState(() {
-                        _tipoConsulta = 'numero';
-                        _controladorBuscaExterna.clear();
-                      }),
-                      selectedColor: const Color(0xFF06B6D4),
-                    ),
-                    ChoiceChip(
-                      label: const Text('CPF / CNPJ'),
-                      selected: _tipoConsulta == 'cpf',
-                      onSelected: (val) => setState(() {
-                        _tipoConsulta = 'cpf';
-                        _controladorBuscaExterna.clear();
-                      }),
-                      selectedColor: const Color(0xFF06B6D4),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Nome Parte'),
-                      selected: _tipoConsulta == 'nome',
-                      onSelected: (val) => setState(() {
-                        _tipoConsulta = 'nome';
-                        _controladorBuscaExterna.clear();
-                      }),
-                      selectedColor: const Color(0xFF06B6D4),
-                    ),
-                  ],
+                // Seleção ajustada para evitar sobreposição na tela
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Nº Processo', style: TextStyle(fontSize: 12)),
+                        selected: _tipoConsulta == 'numero',
+                        onSelected: (val) => setState(() {
+                          _tipoConsulta = 'numero';
+                          _controladorBuscaExterna.clear();
+                        }),
+                        selectedColor: const Color(0xFF06B6D4),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('CPF / CNPJ', style: TextStyle(fontSize: 12)),
+                        selected: _tipoConsulta == 'cpf',
+                        onSelected: (val) => setState(() {
+                          _tipoConsulta = 'cpf';
+                          _controladorBuscaExterna.clear();
+                        }),
+                        selectedColor: const Color(0xFF06B6D4),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Nome Parte', style: TextStyle(fontSize: 12)),
+                        selected: _tipoConsulta == 'nome',
+                        onSelected: (val) => setState(() {
+                          _tipoConsulta = 'nome';
+                          _controladorBuscaExterna.clear();
+                        }),
+                        selectedColor: const Color(0xFF06B6D4),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 TextField(
                   controller: _controladorBuscaExterna,
-                  keyboardType: _tipoConsulta == 'nome' ? TextInputType.text : TextInputType.number,
+                  keyboardType: _obterTipoTeclado(),
+                  inputFormatters: _obterFormatadores(),
+                  textCapitalization: _tipoConsulta == 'nome' ? TextCapitalization.words : TextCapitalization.none,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: _tipoConsulta == 'numero'
@@ -294,8 +316,8 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                     hintText: _tipoConsulta == 'numero'
                         ? 'Ex: 00000000020268170001'
                         : _tipoConsulta == 'cpf'
-                            ? 'Ex: 000.000.000-00'
-                            : 'Ex: José Rivaldo',
+                            ? 'Digite os números (ex: 65677145491)'
+                            : 'Ex: José Rivaldo Matias',
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.manage_search, color: Color(0xFF06B6D4)),
                     filled: true,
@@ -355,7 +377,6 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
                   ),
                 ],
 
-                // Exibição dos cards detalhados por processo
                 if (_resultadosBusca.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   ListView.builder(
@@ -421,6 +442,38 @@ class _TelaPrincipalJusSmartState extends State<TelaPrincipalJusSmart> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Formatador Automático de CPF e CNPJ durante a digitação
+class CpfCnpjInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (text.length > 14) text = text.substring(0, 14);
+
+    String formatted = '';
+    if (text.length <= 11) {
+      // Formatação CPF: 000.000.000-00
+      for (int i = 0; i < text.length; i++) {
+        if (i == 3 || i == 6) formatted += '.';
+        if (i == 9) formatted += '-';
+        formatted += text[i];
+      }
+    } else {
+      // Formatação CNPJ: 00.000.000/0001-00
+      for (int i = 0; i < text.length; i++) {
+        if (i == 2 || i == 5) formatted += '.';
+        if (i == 8) formatted += '/';
+        if (i == 12) formatted += '-';
+        formatted += text[i];
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
